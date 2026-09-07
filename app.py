@@ -1906,3 +1906,121 @@ if __name__ == '__main__':
     print("=" * 60)
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5001)), debug=True)
 
+
+
+# =========================================================================
+# ROTAS: LAUDO TÉCNICO & PORTAL PÚBLICO DA OS (CLIMAGESTÃO HVAC)
+# =========================================================================
+@app.route('/servico/<int:id>/laudo')
+@app.route('/os/<int:id>/laudo')
+def laudo_os_view(id):
+    try:
+        conn = sqlite3.connect('app.db')
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+
+        # Busca dados da empresa
+        c.execute("SELECT * FROM Configuracao LIMIT 1;")
+        config_row = c.fetchone()
+        config_data = dict(config_row) if config_row else {}
+
+        # Busca na tabela AgendamentoOnline primeiro ou Servico
+        c.execute("SELECT * FROM AgendamentoOnline WHERE id = ?", (id,))
+        row = c.fetchone()
+        
+        if not row:
+            c.execute("SELECT * FROM Servico WHERE id = ?", (id,))
+            row = c.fetchone()
+
+        if not row:
+            conn.close()
+            return "Ordem de Serviço não encontrada.", 404
+
+        os_dict = dict(row)
+        
+        # Se tiver cliente_id, busca os dados do cliente
+        if os_dict.get('cliente_id'):
+            c.execute("SELECT nome, telefone, endereco FROM Cliente WHERE id = ?", (os_dict['cliente_id'],))
+            cli = c.fetchone()
+            if cli:
+                os_dict['cliente_nome'] = cli['nome']
+                os_dict['cliente_telefone'] = cli['telefone']
+                os_dict['cliente_endereco'] = cli['endereco']
+
+        # Se tiver aparelho_id, busca os dados do aparelho
+        if os_dict.get('aparelho_id'):
+            c.execute("SELECT marca, modelo, capacidade_btu FROM Aparelho WHERE id = ?", (os_dict['aparelho_id'],))
+            ap = c.fetchone()
+            if ap:
+                os_dict['marca'] = ap['marca']
+                os_dict['modelo'] = ap['modelo']
+                os_dict['capacidade_btu'] = ap['capacidade_btu']
+
+        conn.close()
+
+        # Link de WhatsApp
+        tel_num = re.sub(r'\D', '', str(os_dict.get('cliente_telefone') or os_dict.get('telefone') or ''))
+        token = os_dict.get('token_publico') or str(id)
+        url_publica = request.host_url.rstrip('/') + f"/os/publica/{token}"
+        msg = f"Olá! Segue o Laudo Técnico e Recibo da Ordem de Serviço #{id}: {url_publica}"
+        zap_link = f"https://api.whatsapp.com/send?phone=55{tel_num}&text={urllib.parse.quote(msg)}" if tel_num else None
+
+        return render_template('laudo_tecnico.html', os=os_dict, config=config_data, zap_link=zap_link, publico=False)
+    except Exception as e:
+        return f"Erro ao gerar Laudo Técnico: {str(e)}", 500
+
+
+@app.route('/os/publica/<token>', methods=['GET'])
+def os_publica_view(token):
+    try:
+        conn = sqlite3.connect('app.db')
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+
+        c.execute("SELECT * FROM Configuracao LIMIT 1;")
+        config_row = c.fetchone()
+        config_data = dict(config_row) if config_row else {}
+
+        # Busca por token em AgendamentoOnline ou Servico
+        c.execute("SELECT * FROM AgendamentoOnline WHERE token_publico = ? OR id = ?", (token, token if str(token).isdigit() else -1))
+        row = c.fetchone()
+        if not row:
+            c.execute("SELECT * FROM Servico WHERE token_publico = ? OR id = ?", (token, token if str(token).isdigit() else -1))
+            row = c.fetchone()
+
+        if not row:
+            conn.close()
+            return "<h3 style='font-family:sans-serif; text-align:center; margin-top:50px;'>Ordem de Serviço ou Laudo não encontrado.</h3>", 404
+
+        os_dict = dict(row)
+        if os_dict.get('cliente_id'):
+            c.execute("SELECT nome, telefone, endereco FROM Cliente WHERE id = ?", (os_dict['cliente_id'],))
+            cli = c.fetchone()
+            if cli:
+                os_dict['cliente_nome'] = cli['nome']
+                os_dict['cliente_telefone'] = cli['telefone']
+                os_dict['cliente_endereco'] = cli['endereco']
+
+        conn.close()
+        return render_template('laudo_tecnico.html', os=os_dict, config=config_data, zap_link=None, publico=True)
+    except Exception as e:
+        return f"Erro ao abrir laudo público: {str(e)}", 500
+
+
+@app.route('/os/publica/<token>/assinar', methods=['POST'])
+def salvar_assinatura_publica(token):
+    try:
+        dados = request.get_json() or {}
+        assinatura_b64 = dados.get('assinatura')
+        if not assinatura_b64:
+            return jsonify({'sucesso': False, 'msg': 'Assinatura inválida'}), 400
+
+        conn = sqlite3.connect('app.db')
+        c = conn.cursor()
+        c.execute("UPDATE AgendamentoOnline SET assinatura_cliente = ? WHERE token_publico = ? OR id = ?", (assinatura_b64, token, token if str(token).isdigit() else -1))
+        c.execute("UPDATE Servico SET assinatura_cliente = ? WHERE token_publico = ? OR id = ?", (assinatura_b64, token, token if str(token).isdigit() else -1))
+        conn.commit()
+        conn.close()
+        return jsonify({'sucesso': True})
+    except Exception as e:
+        return jsonify({'sucesso': False, 'erro': str(e)}), 500

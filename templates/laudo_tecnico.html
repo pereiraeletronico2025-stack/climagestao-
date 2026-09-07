@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laudo Técnico OS #{{ os.id }} | {{ config.nome_empresa or 'ClimaGestão' }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f1f5f9;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: #1e293b;
+            padding-bottom: 40px;
+        }
+        .documento-card {
+            background: #ffffff;
+            max-width: 860px;
+            margin: 20px auto;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+        .laudo-header {
+            background: linear-gradient(135deg, #0f172a 0%, #0369a1 100%);
+            color: #ffffff;
+            padding: 24px 30px;
+        }
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0284c7;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 5px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .metric-card {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+        .metric-card small {
+            display: block;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+        }
+        .metric-card strong {
+            font-size: 1.1rem;
+            color: #0f172a;
+        }
+        .foto-container {
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            height: 190px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            overflow: hidden;
+        }
+        .foto-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .assinatura-area {
+            border-bottom: 2px solid #334155;
+            height: 70px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            margin-bottom: 4px;
+        }
+        .assinatura-area img {
+            max-height: 65px;
+            max-width: 100%;
+        }
+        #canvas-assinatura {
+            border: 2px dashed #0284c7;
+            border-radius: 8px;
+            touch-action: none;
+            background: #fff;
+            width: 100%;
+            height: 140px;
+        }
+        @media print {
+            body { background: #fff; padding: 0; }
+            .documento-card { box-shadow: none; border: none; margin: 0; max-width: 100%; border-radius: 0; }
+            .no-print { display: none !important; }
+            .laudo-header { background: #0f172a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .metric-card { border: 1px solid #94a3b8 !important; -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR DE AÇÕES -->
+    <div class="container mt-3 mb-2 no-print" style="max-width: 860px;">
+        <div class="d-flex flex-wrap justify-content-between align-items-center bg-white p-3 rounded-3 shadow-sm gap-2">
+            <div>
+                <a href="/fluxo" class="btn btn-outline-secondary btn-sm"><i class="fa fa-arrow-left"></i> Voltar</a>
+                <span class="badge bg-primary ms-2">OS #{{ os.id }}</span>
+                <span class="badge bg-success ms-1">{{ os.status or os.status_servico or 'Concluído' }}</span>
+            </div>
+            <div class="d-flex gap-2">
+                <button onclick="window.print()" class="btn btn-primary btn-sm"><i class="fa fa-print me-1"></i> Imprimir / Gerar PDF</button>
+                {% if zap_link %}
+                <a href="{{ zap_link }}" target="_blank" class="btn btn-success btn-sm"><i class="fab fa-whatsapp me-1"></i> Enviar p/ WhatsApp</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- CORPO DO LAUDO -->
+    <div class="documento-card">
+        <!-- HEADER -->
+        <div class="laudo-header">
+            <div class="row align-items-center">
+                <div class="col-8">
+                    <h3 class="mb-0 fw-bold"><i class="fa fa-snowflake me-2"></i>{{ config.nome_empresa or 'CLIMAGESTÃO HVAC' }}</h3>
+                    <p class="mb-0 small opacity-75">{{ config.slogan or 'Laudo Técnico de Climatização & Comprovante de Execução' }}</p>
+                    {% if config.telefone %}<small class="opacity-75">Contato: {{ config.telefone }}</small>{% endif %}
+                </div>
+                <div class="col-4 text-end">
+                    <span class="badge bg-light text-dark px-3 py-2 fs-6 fw-bold">OS #{{ os.id }}</span>
+                    <div class="small opacity-75 mt-1">{{ os.data_execucao or os.data_conclusao or os.data_servico or os.data or 'Data Hoje' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4">
+            <!-- DADOS DO CLIENTE -->
+            <div class="section-title"><i class="fa fa-user me-2"></i>Dados do Cliente & Local</div>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Cliente / Razão Social</label>
+                    <strong class="fs-6">{{ os.cliente_nome or os.nome_cliente or 'Cliente Final' }}</strong>
+                </div>
+                <div class="col-md-3">
+                    <label class="small text-muted d-block">Telefone / WhatsApp</label>
+                    <strong>{{ os.cliente_telefone or os.telefone or 'Não informado' }}</strong>
+                </div>
+                <div class="col-md-3">
+                    <label class="small text-muted d-block">Técnico Responsável</label>
+                    <strong>{{ os.funcionario or 'Técnico Especializado' }}</strong>
+                </div>
+                <div class="col-12">
+                    <label class="small text-muted d-block">Endereço de Atendimento</label>
+                    <span>{{ os.cliente_endereco or os.endereco or 'Atendimento Residencial / Comercial' }}</span>
+                </div>
+            </div>
+
+            <!-- DADOS DO EQUIPAMENTO -->
+            <div class="section-title"><i class="fa fa-fan me-2"></i>Equipamento Climatizador</div>
+            <div class="row g-2 mb-4">
+                <div class="col-4">
+                    <div class="metric-card">
+                        <small>Tipo / Aplicação</small>
+                        <strong>{{ os.tipo_aparelho or os.tipo_servico or 'Split Hi-Wall' }}</strong>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="metric-card">
+                        <small>Marca / Modelo</small>
+                        <strong>{{ os.marca or 'Inverter / Convencional' }}</strong>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="metric-card">
+                        <small>Capacidade</small>
+                        <strong>{{ os.capacidade_btu or '9.000 a 18.000 BTU' }}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MEDIÇÕES HVAC -->
+            <div class="section-title"><i class="fa fa-gauge-high me-2"></i>Medições Técnicas e Rendimento</div>
+            <div class="row g-2 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="metric-card">
+                        <small>Pressão de Sucção</small>
+                        <strong class="text-primary">{{ os.pressao_psi or '120-135 PSI' }}</strong>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="metric-card">
+                        <small>Temp. Insuflamento</small>
+                        <strong class="text-primary">{{ os.temp_insuflamento or '8.5 °C' }}</strong>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="metric-card">
+                        <small>Temp. Retorno (Delta T)</small>
+                        <strong class="text-primary">{{ os.temp_retorno or '23.0 °C (Δ 14.5°C)' }}</strong>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="metric-card">
+                        <small>Corrente Operacional</small>
+                        <strong class="text-primary">{{ os.corrente_amperes or '4.8 A' }}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SERVIÇO EXECUTADO -->
+            <div class="section-title"><i class="fa fa-screwdriver-wrench me-2"></i>Descrição dos Procedimentos</div>
+            <div class="bg-light p-3 rounded-3 mb-4 border">
+                <h6 class="fw-bold mb-1">{{ os.tipo_servico or os.descricao or 'Higienização e Manutenção Preventiva Completa' }}</h6>
+                <p class="mb-2 text-secondary small">
+                    {{ os.observacao_interna or os.observacao or os.laudo_obs or 'Desmontagem técnica da evaporadora, aplicação de bactericida certificado com neutralização de fungos e ácaros, desobstrução de dreno, limpeza da serpentina, checagem elétrica e teste de estanqueidade.' }}
+                </p>
+                {% if os.valor or os.preco %}
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2">
+                    <span class="text-muted small">Investimento Total:</span>
+                    <span class="fs-5 fw-bold text-success">R$ {{ "%.2f"|format((os.valor or os.preco)|float) }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- FOTOS ANTES E DEPOIS -->
+            <div class="section-title"><i class="fa fa-camera me-2"></i>Comprovação Fotográfica</div>
+            <div class="row g-3 mb-4">
+                <div class="col-6">
+                    <div class="text-center mb-1 small fw-bold text-secondary">ESTADO ANTERIOR</div>
+                    <div class="foto-container">
+                        {% if os.foto_antes %}
+                            <img src="{{ os.foto_antes }}" alt="Antes">
+                        {% else %}
+                            <span class="text-muted small text-center p-2"><i class="fa fa-image fa-2x d-block mb-1 opacity-50"></i>Foto Inicial</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="text-center mb-1 small fw-bold text-secondary">SERVIÇO CONCLUÍDO</div>
+                    <div class="foto-container">
+                        {% if os.foto_depois %}
+                            <img src="{{ os.foto_depois }}" alt="Depois">
+                        {% else %}
+                            <span class="text-muted small text-center p-2"><i class="fa fa-image fa-2x d-block mb-1 opacity-50"></i>Foto Final</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- GARANTIA LEGAL -->
+            <div class="p-3 bg-light rounded-3 border mb-4">
+                <div class="small text-muted">
+                    <strong>Garantia do Serviço:</strong> {{ os.garantia_dias or 90 }} dias para a mão de obra executada conforme o Código de Defesa do Consumidor (Art. 26 da Lei 8.078/90), válida mediante uso regular do sistema.
+                </div>
+            </div>
+
+            <!-- ASSINATURAS -->
+            <div class="row pt-2 text-center align-items-end">
+                <div class="col-6">
+                    <div class="assinatura-area">
+                        {% if os.assinatura_cliente %}
+                            <img src="{{ os.assinatura_cliente }}" alt="Assinatura Cliente">
+                        {% else %}
+                            <span class="text-muted small fst-italic">Pendente ou Coletada via App</span>
+                        {% endif %}
+                    </div>
+                    <small class="d-block fw-bold text-secondary">{{ os.cliente_nome or os.nome_cliente or 'Assinatura do Cliente' }}</small>
+                </div>
+                <div class="col-6">
+                    <div class="assinatura-area">
+                        <span class="fw-bold text-primary mb-1" style="font-family: 'Brush Script MT', cursive; font-size: 1.5rem;">
+                            {{ config.nome_empresa or 'ClimaGestão Técnico' }}
+                        </span>
+                    </div>
+                    <small class="d-block fw-bold text-secondary">Responsável Técnico Autorizado</small>
+                </div>
+            </div>
+
+            <!-- ASSINATURA NA TELA (SE ACESSADO PELO CLIENTE NO LINK PÚBLICO E NÃO ASSINOU AINDA) -->
+            {% if publico and not os.assinatura_cliente %}
+            <div class="mt-4 p-3 bg-light rounded-3 border no-print">
+                <h6 class="fw-bold text-primary mb-2"><i class="fa fa-pen me-2"></i>Assine com o dedo no quadro abaixo para aprovação:</h6>
+                <canvas id="canvas-assinatura"></canvas>
+                <div class="d-flex justify-content-between mt-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="limparAssinatura()">Limpar</button>
+                    <button type="button" class="btn btn-success btn-sm" onclick="salvarAssinatura()">Confirmar Assinatura</button>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- RODAPÉ DIGITAL -->
+            <div class="text-center mt-4 pt-3 border-top small text-muted">
+                Autenticado via ClimaGestão SaaS  Token Único: <code>{{ os.token_publico or 'CG-VALID' }}</code>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE CAPTURA DE ASSINATURA TOUCH / MOUSE -->
+    <script>
+        const canvas = document.getElementById('canvas-assinatura');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            let desenhando = false;
+            
+            function redimensionar() {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = '#0f172a';
+            }
+            window.addEventListener('resize', redimensionar);
+            redimensionar();
+
+            function getPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return { x: clientX - rect.left, y: clientY - rect.top };
+            }
+
+            function iniciar(e) {
+                desenhando = true;
+                const pos = getPos(e);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+                e.preventDefault();
+            }
+
+            function desenhar(e) {
+                if (!desenhando) return;
+                const pos = getPos(e);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+                e.preventDefault();
+            }
+
+            function parar() { desenhando = false; }
+
+            canvas.addEventListener('mousedown', iniciar);
+            canvas.addEventListener('mousemove', desenhar);
+            window.addEventListener('mouseup', parar);
+
+            canvas.addEventListener('touchstart', iniciar, {passive: false});
+            canvas.addEventListener('touchmove', desenhar, {passive: false});
+            window.addEventListener('touchend', parar);
+
+            window.limparAssinatura = function() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            };
+
+            window.salvarAssinatura = function() {
+                const dataUrl = canvas.toDataURL('image/png');
+                fetch('/os/publica/{{ os.token_publico }}/assinar', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({assinatura: dataUrl})
+                }).then(r => r.json()).then(res => {
+                    if (res.sucesso) {
+                        alert('Assinatura confirmada com sucesso!');
+                        location.reload();
+                    } else {
+                        alert('Erro ao salvar assinatura.');
+                    }
+                });
+            };
+        }
+    </script>
+</body>
+</html>
