@@ -2345,3 +2345,43 @@ def meudia_salvar_execucao(id):
         return jsonify({'sucesso': True})
     except Exception as e:
         return jsonify({'sucesso': False, 'erro': str(e)}), 500
+
+
+# =========================================================================
+# ROTA: CENTRAL DE LAUDOS & PORTAIS DO CLIENTE
+# =========================================================================
+@app.route('/laudos')
+@app.route('/portal-cliente')
+@app.route('/portais')
+def central_laudos():
+    try:
+        conn = sqlite3.connect('app.db')
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+
+        c.execute("""
+            SELECT id, nome_cliente, telefone, tipo_servico, data_sugerida, etapa_fluxo, status, token_publico, assinatura_cliente 
+            FROM AgendamentoOnline 
+            ORDER BY id DESC;
+        """)
+        rows = c.fetchall()
+        conn.close()
+
+        laudos = []
+        for r in rows:
+            d = dict(r)
+            tel_limpo = re.sub(r'\D', '', str(d.get('telefone') or ''))
+            token = d.get('token_publico') or str(d['id'])
+            url_pub = request.host_url.rstrip('/') + f"/os/publica/{token}"
+            
+            if tel_limpo:
+                msg = f"Olá {d.get('nome_cliente')}! Seu Laudo Técnico e Portal de Atendimento da Ordem de Serviço #{d['id']} está disponível no link: {url_pub}"
+                d['zap_link'] = f"https://api.whatsapp.com/send?phone=55{tel_limpo}&text={urllib.parse.quote(msg)}"
+            else:
+                d['zap_link'] = None
+                
+            laudos.append(d)
+
+        return render_template('central_laudos.html', laudos=laudos)
+    except Exception as e:
+        return f"Erro ao carregar Central de Laudos: {str(e)}", 500

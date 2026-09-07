@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central de Laudos & Portal do Cliente | ClimaGestão</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; color: #1e293b; }
+        .card-box {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark py-2 px-3">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/painel"><i class="fa fa-snowflake text-info me-2"></i>ClimaGestão</a>
+            <div class="d-flex gap-2">
+                <a href="/painel" class="btn btn-outline-light btn-sm"><i class="fa fa-home"></i> Painel</a>
+                <a href="/fluxo" class="btn btn-outline-info btn-sm"><i class="fa fa-stream"></i> Esteira Kanban</a>
+                <a href="/pmoc" class="btn btn-outline-warning btn-sm"><i class="fa fa-file-contract"></i> PMOC</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4 py-4">
+        <!-- HEADER -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div>
+                <h3 class="fw-bold text-dark mb-1"><i class="fa fa-globe text-primary me-2"></i>Central de Laudos & Portais do Cliente</h3>
+                <p class="text-muted mb-0">Envie o link público exclusivo para o cliente acompanhar a OS, ver fotos e assinar pelo celular.</p>
+            </div>
+            <a href="/fluxo" class="btn btn-primary"><i class="fa fa-plus me-1"></i> Nova OS na Esteira</a>
+        </div>
+
+        <!-- TABELA DE LAUDOS E LINKS PÚBLICOS -->
+        <div class="card-box">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>OS / Cliente</th>
+                            <th>Serviço</th>
+                            <th>Data</th>
+                            <th>Assinatura Digital</th>
+                            <th>Link Público do Cliente</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for os in laudos %}
+                        <tr>
+                            <td>
+                                <strong class="d-block text-dark">#{{ os.id }} - {{ os.nome_cliente }}</strong>
+                                <small class="text-muted"><i class="fa fa-phone me-1"></i>{{ os.telefone or 'Sem telefone' }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary bg-opacity-10 text-dark">{{ os.tipo_servico or 'Serviço HVAC' }}</span>
+                            </td>
+                            <td>{{ os.data_sugerida or os.data or 'Hoje' }}</td>
+                            <td>
+                                {% if os.assinatura_cliente %}
+                                    <span class="badge bg-success"><i class="fa fa-check-double me-1"></i> Assinado</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark"><i class="fa fa-clock me-1"></i> Aguardando</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="input-group input-group-sm" style="max-width: 320px;">
+                                    <input type="text" id="link-{{ os.id }}" class="form-control form-control-sm text-muted" value="{{ request.host_url.rstrip('/') }}/os/publica/{{ os.token_publico }}" readonly>
+                                    <button class="btn btn-outline-primary" type="button" onclick="copiarLink('link-{{ os.id }}')">
+                                        <i class="fa fa-copy"></i> Copiar
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <!-- ABRIR PORTAL -->
+                                <a href="/os/publica/{{ os.token_publico }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Abrir Visão do Cliente">
+                                    <i class="fa fa-external-link-alt me-1"></i> Abrir Portal
+                                </a>
+
+                                <!-- WHATSAPP DIRETO -->
+                                {% if os.zap_link %}
+                                <a href="{{ os.zap_link }}" target="_blank" class="btn btn-sm btn-success" title="Enviar no WhatsApp do Cliente">
+                                    <i class="fab fa-whatsapp"></i>
+                                </a>
+                                {% endif %}
+
+                                <!-- LAUDO IMPRESSÃO -->
+                                <a href="/servico/{{ os.id }}/laudo" class="btn btn-sm btn-dark" title="Imprimir / PDF">
+                                    <i class="fa fa-print"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="fa fa-folder-open fa-2x mb-2 d-block opacity-50"></i>
+                                Nenhuma ordem de serviço cadastrada para gerar laudo.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copiarLink(elementId) {
+            const input = document.getElementById(elementId);
+            input.select();
+            input.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(input.value);
+            alert('Link público do cliente copiado para a área de transferência!');
+        }
+    </script>
+</body>
+</html>
