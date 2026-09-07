@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 # -*- coding: utf-8 -*-
 import os
 import sqlite3
@@ -2024,3 +2025,162 @@ def salvar_assinatura_publica(token):
         return jsonify({'sucesso': True})
     except Exception as e:
         return jsonify({'sucesso': False, 'erro': str(e)}), 500
+
+
+# =========================================================================
+# ROTAS: PMOC & CONTRATOS DE MANUTENÇÃO RECORRENTE (HVAC)
+# =========================================================================
+@app.route('/pmoc')
+def pmoc_dashboard():
+    try:
+        conn = sqlite3.connect('app.db')
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+
+        # Busca clientes para o select
+        c.execute("SELECT id, nome, telefone FROM Cliente ORDER BY nome ASC;")
+        clientes = [dict(r) for r in c.fetchall()]
+
+        # Busca contratos com JOIN em Cliente
+        c.execute("""
+            SELECT p.*, c.nome as cliente_nome, c.telefone as cliente_telefone 
+            FROM ContratoPMOC p
+            LEFT JOIN Cliente c ON p.cliente_id = c.id
+            ORDER BY p.id DESC;
+        """)
+        contratos_raw = c.fetchall()
+        contratos = []
+        
+        mrr_total = 0.0
+        total_ativos = 0
+        visitas_proximas = 0
+        hoje = datetime.now().date()
+        em_30_dias = hoje + timedelta(days=30)
+
+        for cr in contratos_raw:
+            cd = dict(cr)
+            if cd.get('status') == 'Ativo':
+                total_ativos += 1
+                mrr_total += float(cd.get('valor_mensal') or 0.0)
+
+            # Checa proximidade da visita
+            if cd.get('proxima_visita'):
+                try:
+                    dt_vis = datetime.strptime(cd['proxima_visita'][:10], '%Y-%m-%d').date()
+                    if hoje <= dt_vis <= em_30_dias:
+                        visitas_proximas += 1
+                except Exception:
+                    pass
+
+            # Monta link WhatsApp
+            tel = re.sub(r'\D', '', str(cd.get('cliente_telefone') or ''))
+            if tel:
+                msg = f"Olá {cd.get('cliente_nome')}! Sua manutenção preventiva periódica (PMOC) está prevista para o dia {cd.get('proxima_visita')}. Podemos confirmar o horário?"
+                cd['zap_link'] = f"https://api.whatsapp.com/send?phone=55{tel}&text={urllib.parse.quote(msg)}"
+            else:
+                cd['zap_link'] = None
+
+            contratos.append(cd)
+
+        conn.close()
+        return render_template('pmoc.html', contratos=contratos, clientes=clientes, total_ativos=total_ativos, mrr_total=mrr_total, visitas_proximas=visitas_proximas)
+    except Exception as e:
+        return f"Erro ao carregar PMOC: {str(e)}", 500
+
+
+@app.route('/pmoc/novo', methods=['POST'])
+def pmoc_novo():
+    try:
+        titulo = request.form.get('titulo')
+        cliente_id = request.form.get('cliente_id')
+        frequencia_dias = int(request.form.get('frequencia_dias') or 30)
+        valor_mensal = float(request.form.get('valor_mensal') or 0.0)
+        proxima_visita = request.form.get('proxima_visita') or datetime.now().strftime('%Y-%m-%d')
+        responsavel_tecnico = request.form.get('responsavel_tecnico')
+        observacoes = request.form.get('observacoes')
+        data_inicio = datetime.now().strftime('%Y-%m-%d')
+
+        conn = sqlite3.connect('app.db')
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO ContratoPMOC (cliente_id, titulo, frequencia_dias, valor_mensal, data_inicio, proxima_visita, status, responsavel_tecnico, observacoes)
+            VALUES (?, ?, ?, ?, ?, ?, 'Ativo', ?, ?)
+        """, (cliente_id, titulo, frequencia_dias, valor_mensal, data_inicio, proxima_visita, responsavel_tecnico, observacoes))
+        conn.commit()
+        conn.close()
+
+        return redirect('/pmoc')
+    except Exception as e:
+        return f"Erro ao criar contrato PMOC: {str(e)}", 500
+
+
+@app.route('/pmoc/gerar-os/<int:id>')
+def pmoc_gerar_os(id):
+    try:
+        conn = sqlite3.connect('app.db')
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        
+        c.execute("SELECT * FROM ContratoPMOC WHERE id = ?", (id,))
+        ct = c.fetchone()
+        if not ct:
+            conn.close()
+            return "Contrato não encontrado", 404
+            
+        ct_dict = dict(ct)
+        cliente_id = ct_dict.get('cliente_id')
+        
+        # Pega dados do cliente
+        c.execute("SELECT nome, telefone, endereco FROM Cliente WHERE id = ?", (cliente_id,))
+        cli = c.fetchone()
+        cli_dict = dict(cli) if cli else {}
+
+        # Gera token para a OS
+        novo_token = str(uuid.uuid4())[:10]
+        data_hoje = datetime.now().strftime('%Y-%m-%d')
+        
+        # Insere nova OS diretamente na Esteira (AgendamentoOnline)
+        c.execute("""
+            INSERT INTO AgendamentoOnline (
+                nome_cliente, telefone, endereco, tipo_servico, data_sugerida, 
+                periodo, observacao, status, valor, etapa_fluxo, token_publico
+            ) VALUES (?, ?, ?, ?, ?, 'Manhã', ?, 'Aprovado', ?, 'Pendente', ?)
+        """, (
+            cli_dict.get('nome') or 'Cliente PMOC',
+            cli_dict.get('telefone') or '',
+            cli_dict.get('endereco') or '',
+            ct_dict.get('titulo') or 'Manutenção Preventiva PMOC',
+            ct_dict.get('proxima_visita') or data_hoje,
+            f"Visita periódica automática PMOC. Obs: {ct_dict.get('observacoes') or ''}",
+            ct_dict.get('valor_mensal') or 0.0,
+            novo_token
+        ))
+        
+        # Atualiza a data da próxima visita do contrato (+ frequencia_dias)
+        try:
+            freq = int(ct_dict.get('frequencia_dias') or 30)
+            base_data = datetime.strptime(ct_dict.get('proxima_visita') or data_hoje, '%Y-%m-%d')
+            nova_proxima_visita = (base_data + timedelta(days=freq)).strftime('%Y-%m-%d')
+        except Exception:
+            nova_proxima_visita = (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d')
+
+        c.execute("UPDATE ContratoPMOC SET proxima_visita = ? WHERE id = ?", (nova_proxima_visita, id))
+        conn.commit()
+        conn.close()
+
+        return redirect('/fluxo')
+    except Exception as e:
+        return f"Erro ao gerar OS automática: {str(e)}", 500
+
+
+@app.route('/pmoc/excluir/<int:id>')
+def pmoc_excluir(id):
+    try:
+        conn = sqlite3.connect('app.db')
+        c = conn.cursor()
+        c.execute("DELETE FROM ContratoPMOC WHERE id = ?", (id,))
+        conn.commit()
+        conn.close()
+        return redirect('/pmoc')
+    except Exception as e:
+        return f"Erro ao excluir contrato: {str(e)}", 500

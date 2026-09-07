@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMOC & Contratos de Manutenção | ClimaGestão</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; color: #1e293b; }
+        .card-metric {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .card-metric:hover { transform: translateY(-3px); }
+        .table-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR SIMPLES -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark py-2 px-3">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/painel"><i class="fa fa-snowflake text-info me-2"></i>ClimaGestão</a>
+            <div class="d-flex gap-2">
+                <a href="/painel" class="btn btn-outline-light btn-sm"><i class="fa fa-home"></i> Painel</a>
+                <a href="/fluxo" class="btn btn-outline-info btn-sm"><i class="fa fa-stream"></i> Esteira Kanban</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4 py-4">
+        <!-- HEADER -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div>
+                <h3 class="fw-bold text-dark mb-1"><i class="fa fa-file-contract text-primary me-2"></i>PMOC & Contratos Recorrentes</h3>
+                <p class="text-muted mb-0">Gestão de manutenção preventiva periódica e receita previsível (MRR)</p>
+            </div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovoContrato">
+                <i class="fa fa-plus-circle me-1"></i> Novo Contrato PMOC
+            </button>
+        </div>
+
+        <!-- CARDS DE RESUMO -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card card-metric bg-primary text-white p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="small text-uppercase opacity-75">Contratos Ativos</span>
+                            <h2 class="fw-bold mb-0">{{ total_ativos }}</h2>
+                        </div>
+                        <i class="fa fa-handshake fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-metric bg-success text-white p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="small text-uppercase opacity-75">Receita Recorrente (MRR)</span>
+                            <h2 class="fw-bold mb-0">R$ {{ "%.2f"|format(mrr_total) }}</h2>
+                        </div>
+                        <i class="fa fa-money-bill-trend-up fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-metric bg-dark text-white p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="small text-uppercase opacity-75">Visitas Previstas (30 Dias)</span>
+                            <h2 class="fw-bold mb-0">{{ visitas_proximas }}</h2>
+                        </div>
+                        <i class="fa fa-calendar-check fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABELA DE CONTRATOS -->
+        <div class="table-card p-3">
+            <h5 class="fw-bold mb-3"><i class="fa fa-list me-2 text-secondary"></i>Contratos Cadastrados</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Contrato / Cliente</th>
+                            <th>Frequência</th>
+                            <th>Próxima Visita</th>
+                            <th>Valor Mensal</th>
+                            <th>Status</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in contratos %}
+                        <tr>
+                            <td>
+                                <strong class="d-block text-dark">{{ c.titulo or 'Contrato de Manutenção' }}</strong>
+                                <small class="text-muted"><i class="fa fa-user me-1"></i>{{ c.cliente_nome }}</small>
+                                {% if c.aparelho_info %}
+                                    <small class="text-muted ms-2"><i class="fa fa-fan me-1"></i>{{ c.aparelho_info }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    {% if c.frequencia_dias == 30 %}Mensal (30d)
+                                    {% elif c.frequencia_dias == 60 %}Bimestral (60d)
+                                    {% elif c.frequencia_dias == 90 %}Trimestral (90d)
+                                    {% elif c.frequencia_dias == 180 %}Semestral (180d)
+                                    {% else %}{{ c.frequencia_dias }} dias{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <strong class="text-primary"><i class="fa fa-calendar-day me-1"></i>{{ c.proxima_visita or 'Não agendada' }}</strong>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-success">R$ {{ "%.2f"|format(c.valor_mensal|float) }}</span>
+                            </td>
+                            <td>
+                                {% if c.status == 'Ativo' %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ c.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <!-- GERAR OS NA ESTEIRA -->
+                                <a href="/pmoc/gerar-os/{{ c.id }}" class="btn btn-sm btn-primary" title="Gerar OS de Visita na Esteira">
+                                    <i class="fa fa-bolt me-1"></i> Gerar OS
+                                </a>
+                                
+                                <!-- WHATSAPP LEMBRETE -->
+                                {% if c.zap_link %}
+                                <a href="{{ c.zap_link }}" target="_blank" class="btn btn-sm btn-outline-success" title="Avisar Cliente no WhatsApp">
+                                    <i class="fab fa-whatsapp"></i>
+                                </a>
+                                {% endif %}
+
+                                <!-- EXCLUIR -->
+                                <a href="/pmoc/excluir/{{ c.id }}" onclick="return confirm('Deseja realmente remover este contrato?');" class="btn btn-sm btn-outline-danger" title="Excluir">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="fa fa-file-circle-question fa-2x mb-2 d-block opacity-50"></i>
+                                Nenhum contrato PMOC cadastrado até o momento.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL NOVO CONTRATO -->
+    <div class="modal fade" id="modalNovoContrato" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form action="/pmoc/novo" method="POST">
+                    <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title"><i class="fa fa-plus-circle me-2"></i>Novo Contrato PMOC / Manutenção Periódica</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label fw-bold small">Título / Descrição do Contrato</label>
+                                <input type="text" name="titulo" class="form-control" placeholder="Ex: PMOC Climatização - Escritório Central" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small">Cliente</label>
+                                <select name="cliente_id" class="form-select" required>
+                                    <option value="">Selecione o Cliente...</option>
+                                    {% for cli in clientes %}
+                                        <option value="{{ cli.id }}">{{ cli.nome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small">Periodicidade</label>
+                                <select name="frequencia_dias" class="form-select" required>
+                                    <option value="30">Mensal (a cada 30 dias)</option>
+                                    <option value="60">Bimestral (a cada 60 dias)</option>
+                                    <option value="90">Trimestral (a cada 90 dias)</option>
+                                    <option value="180">Semestral (a cada 180 dias)</option>
+                                    <option value="365">Anual (a cada 365 dias)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small">Valor Mensal (R$)</label>
+                                <input type="number" step="0.01" name="valor_mensal" class="form-control" placeholder="150.00" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small">Primeira Visita</label>
+                                <input type="date" name="proxima_visita" class="form-control" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">Técnico Responsável</label>
+                                <input type="text" name="responsavel_tecnico" class="form-control" placeholder="Ex: Pereira Técnico">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">Observações Gerais</label>
+                                <input type="text" name="observacoes" class="form-control" placeholder="Ex: 4 Splits Inverter - Acesso pela portaria lateral">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary fw-bold"><i class="fa fa-save me-1"></i> Salvar Contrato</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
