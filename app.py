@@ -2184,3 +2184,90 @@ def pmoc_excluir(id):
         return redirect('/pmoc')
     except Exception as e:
         return f"Erro ao excluir contrato: {str(e)}", 500
+
+
+def gerar_mensagem_fechamento_diario():
+    try:
+        conn = sqlite3.connect('app.db')
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        
+        hoje_iso = datetime.now().strftime('%Y-%m-%d')
+        hoje_br = datetime.now().strftime('%d/%m/%Y')
+        amanha_iso = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+        amanha_br = (datetime.now() + timedelta(days=1)).strftime('%d/%m/%Y')
+
+        # 1. Entradas e Saidas do Caixa Hoje
+        c.execute("SELECT tipo, valor FROM Caixa WHERE data LIKE ? OR data LIKE ?", (f"{hoje_iso}%", f"{hoje_br}%"))
+        lancamentos = c.fetchall()
+        entradas = sum(float(l['valor'] or 0) for l in lancamentos if str(l['tipo']).lower() in ['entrada', 'receita'])
+        saidas = sum(float(l['valor'] or 0) for l in lancamentos if str(l['tipo']).lower() in ['saida', 'saída', 'despesa'])
+        saldo = entradas - saidas
+
+        # 2. Ordens Concluidas Hoje (AgendamentoOnline ou Servico)
+        c.execute("""
+            SELECT COUNT(*) FROM AgendamentoOnline 
+            WHERE (etapa_fluxo = 'Concluído' OR status = 'Concluído') 
+            AND (data_conclusao LIKE ? OR data_sugerida LIKE ?)
+        """, (f"{hoje_iso}%", f"{hoje_iso}%"))
+        os_concluidas = c.fetchone()[0]
+
+        # 3. Agendamentos Programados para Amanhã
+        c.execute("""
+            SELECT nome_cliente, tipo_servico, periodo FROM AgendamentoOnline 
+            WHERE data_sugerida LIKE ? AND etapa_fluxo != 'Cancelado'
+            ORDER BY id ASC LIMIT 5
+        """, (f"{amanha_iso}%",))
+        agendamentos_amanha = c.fetchall()
+
+        conn.close()
+
+        # Monta Mensagem Formatada
+        texto = f" <b>FECHAMENTO DIÁRIO  CLIMAGESTÃO</b>\n"
+        texto += f" <i>Data: {hoje_br}</i>\n\n"
+        
+        texto += f" <b>Resumo Financeiro do Dia:</b>\n"
+        texto += f" Entradas: <b>R$ {entradas:.2f}</b>\n"
+        texto += f" Saídas: <b>R$ {saidas:.2f}</b>\n"
+        texto += f" Saldo Líquido: <b>R$ {saldo:.2f}</b>\n\n"
+
+        texto += f" <b>Operacional & Serviços:</b>\n"
+        texto += f" OS Concluídas Hoje: <b>{os_concluidas}</b>\n\n"
+
+        texto += f" <b>Programação de Amanhã ({amanha_br}):</b>\n"
+        if agendamentos_amanha:
+            for ag in agendamentos_amanha:
+                texto += f" <b>{ag['nome_cliente']}</b> ({ag['tipo_servico'] or 'Serviço'}) - {ag['periodo'] or 'Manhã'}\n"
+        else:
+            texto += " <i>Nenhum agendamento programado ainda.</i>\n"
+
+        texto += f"\n <i>ClimaGestão SaaS  Tenha uma excelente noite!</i>"
+        return texto
+    except Exception as e:
+        return f" Erro ao calcular fechamento diário: {str(e)}"
+
+
+@app.route('/telegram/disparar-fechamento')
+def disparar_fechamento_telegram_manual():
+    try:
+        conn = sqlite3.connect('app.db')
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        c.execute("SELECT bot_token, chat_id, ativo FROM TelegramConfig WHERE ativo = 1 LIMIT 1;")
+        tg = c.fetchone()
+        conn.close()
+
+        if not tg or not tg['bot_token'] or not tg['chat_id']:
+            flash("Telegram não configurado ou inativo.", "warning")
+            return redirect('/telegram')
+
+        msg = gerar_mensagem_fechamento_diario()
+        url = f"https://api.telegram.org/bot{tg['bot_token']}/sendMessage"
+        payload = {'chat_id': tg['chat_id'], 'text': msg, 'parse_mode': 'HTML'}
+        urllib.request.urlopen(urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers={'Content-Type': 'application/json'}), timeout=10)
+        
+        flash("Fechamento diário enviado para o seu Telegram com sucesso!", "success")
+        return redirect('/painel')
+    except Exception as e:
+        flash(f"Erro ao disparar fechamento: {str(e)}", "danger")
+        return redirect('/painel')
