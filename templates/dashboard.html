@@ -114,7 +114,21 @@
                 <div class='user-dropdown-card' id='user-dropdown'>
                     <div class='dropdown-head-title'>CONTA / ASSINANTE</div>
                     <a href='/configuracoes'> Configurações do Sistema</a>
-                    <a href='/telegram'> Configuração Telegram</a>
+                    
+        <div class="dropdown d-inline-block me-2">
+            <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Módulos HVAC
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="/laudos">Portal do Cliente & Laudos</a></li>
+                <li><a class="dropdown-item" href="/pmoc">PMOC & Contratos</a></li>
+                <li><a class="dropdown-item" href="/meu-dia">Meu Dia (Técnico)</a></li>
+                <li><a class="dropdown-item" href="/telegram/disparar-fechamento">Fechamento no Telegram</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="/telegram">Configurar Telegram</a></li>
+            </ul>
+        </div>
+        <a href='/telegram'> Configuração Telegram</a>
                     <a href='/videos-cursos'> Vídeos e Cursos</a>
                     {% if session.get('is_admin') %}
                         <a href='/admin' class='admin-link'> Painel Admin (Criador)</a>
