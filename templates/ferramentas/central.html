@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Central HVAC - {{ config.nome_empresa }}</title>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='hvac-container'>
+        <header class='hvac-header'>
+            <a href='/' class='btn-back'> Painel</a>
+            <h2> Central de Diagnóstico HVAC</h2>
+        </header>
+
+        <div class='tabs'>
+            <button class='tab-btn active' onclick='openTab("pt-calc")'> Superaquecimento (P/T)</button>
+            <button class='tab-btn' onclick='openTab("btu-calc")'> Carga Térmica (BTUs)</button>
+            <button class='tab-btn' onclick='openTab("erros-calc")'> Códigos de Erro</button>
+        </div>
+
+        <div id='pt-calc' class='tab-content active'>
+            <div class='card-tech'>
+                <h3>Cálculo de Superaquecimento (SH)</h3>
+                <p style='color: #94a3b8; font-size: 0.9em;'>Diagnóstico de carga de fluido e rendimento.</p>
+                <div class='form-grid'>
+                    <div class='form-group'>
+                        <label>Fluido Refrigerante:</label>
+                        <select id='gas-tipo' class='input-hvac' onchange='calcularSH()'>
+                            <option value='R410A'>R-410A</option>
+                            <option value='R32'>R-32</option>
+                            <option value='R22'>R-22</option>
+                        </select>
+                    </div>
+                    <div class='form-group'>
+                        <label>Pressão de Sucção (PSI):</label>
+                        <input type='number' id='pressao-succao' class='input-hvac' placeholder='Ex: 120' oninput='calcularSH()'>
+                    </div>
+                    <div class='form-group'>
+                        <label>Temp. Tubo Sucção (°C):</label>
+                        <input type='number' id='temp-succao' class='input-hvac' placeholder='Ex: 12' oninput='calcularSH()'>
+                    </div>
+                </div>
+                <div class='result-box'>
+                    <h4>Superaquecimento: <span id='val-sh'>--</span> °C</h4>
+                    <p id='status-sh' class='status-badge'>Preencha os dados acima</p>
+                </div>
+            </div>
+        </div>
+
+        <div id='btu-calc' class='tab-content'>
+            <div class='card-tech'>
+                <h3>Dimensionamento de BTUs</h3>
+                <div class='form-grid'>
+                    <div class='form-group'>
+                        <label>Área do Cômodo (m²):</label>
+                        <input type='number' id='area-m2' class='input-hvac' placeholder='Ex: 16' oninput='calcularBTU()'>
+                    </div>
+                    <div class='form-group'>
+                        <label>Pessoas no Local:</label>
+                        <input type='number' id='num-pessoas' class='input-hvac' value='2' oninput='calcularBTU()'>
+                    </div>
+                    <div class='form-group'>
+                        <label>Exposição Solar:</label>
+                        <select id='sol-tipo' class='input-hvac' onchange='calcularBTU()'>
+                            <option value='600'>Sol da Manhã (600 BTU/m²)</option>
+                            <option value='800'>Sol da Tarde (800 BTU/m²)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class='result-box'>
+                    <h4>Potência Necessária: <span id='val-btu'>--</span> BTUs</h4>
+                    <p id='rec-btu' class='status-badge'>Informe a metragem</p>
+                </div>
+            </div>
+        </div>
+
+        <div id='erros-calc' class='tab-content'>
+            <div class='card-tech'>
+                <h3>Busca de Códigos de Falha</h3>
+                <input type='text' id='busca-erro' class='input-hvac' placeholder='Digite o erro (ex: E1, CH05, EC)...' onkeyup='filtrarErros()'>
+                <table class='tech-table' id='tabela-erros'>
+                    <thead><tr><th>Marca</th><th>Código</th><th>Causa</th><th>Teste</th></tr></thead>
+                    <tbody>
+                        <tr><td>Midea/Carrier</td><td><b>E1</b></td><td>Falha comunicação serial</td><td>Checar cabo PP e bornes 1-2-3</td></tr>
+                        <tr><td>Midea/Springer</td><td><b>EC</b></td><td>Vazamento de fluido</td><td>Testar pressão no manifold</td></tr>
+                        <tr><td>LG Inverter</td><td><b>CH05</b></td><td>Erro de comunicação</td><td>Checar aterramento e sinal</td></tr>
+                        <tr><td>LG Inverter</td><td><b>CH21</b></td><td>Pico corrente IPM</td><td>Testar enrolamento compressor</td></tr>
+                        <tr><td>Gree</td><td><b>E6</b></td><td>Comunicação interna/externa</td><td>Verificar placa e fiação</td></tr>
+                        <tr><td>Daikin</td><td><b>U4</b></td><td>Transmissão anormal</td><td>Testar chicote elétrico</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openTab(id) {
+            document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.target.classList.add('active');
+        }
+        function calcularSH() {
+            const gas = document.getElementById('gas-tipo').value;
+            const p = parseFloat(document.getElementById('pressao-succao').value);
+            const t = parseFloat(document.getElementById('temp-succao').value);
+            if (!p || isNaN(t)) return;
+            let tev = gas === 'R410A' ? (p - 100) * 0.22 : (p - 58) * 0.4;
+            let sh = (t - tev).toFixed(1);
+            document.getElementById('val-sh').innerText = sh;
+            let st = document.getElementById('status-sh');
+            if (sh >= 5 && sh <= 9) { st.innerText = ' Superaquecimento Ideal'; st.className = 'status-badge badge-success'; }
+            else if (sh < 5) { st.innerText = ' SH Baixo - Risco de líquido no compressor'; st.className = 'status-badge badge-warning'; }
+            else { st.innerText = ' SH Alto - Falta de fluido ou obstrução'; st.className = 'status-badge badge-danger'; }
+        }
+        function calcularBTU() {
+            const a = parseFloat(document.getElementById('area-m2').value) || 0;
+            const p = parseInt(document.getElementById('num-pessoas').value) || 0;
+            const sol = parseInt(document.getElementById('sol-tipo').value) || 600;
+            if (a <= 0) return;
+            let total = (a * sol) + ((p > 1 ? p - 1 : 0) * 600);
+            document.getElementById('val-btu').innerText = total.toLocaleString('pt-BR');
+            let rec = '9.000 BTU';
+            if (total > 9000 && total <= 12000) rec = '12.000 BTU';
+            else if (total > 12000 && total <= 18000) rec = '18.000 BTU';
+            else if (total > 18000 && total <= 24000) rec = '24.000 BTU';
+            else if (total > 24000) rec = '30.000+ BTU';
+            let b = document.getElementById('rec-btu');
+            b.innerText = 'Aparelho Ideal: ' + rec;
+            b.className = 'status-badge badge-info';
+        }
+        function filtrarErros() {
+            let input = document.getElementById('busca-erro').value.toUpperCase();
+            let tr = document.getElementById('tabela-erros').getElementsByTagName('tr');
+            for (let i = 1; i < tr.length; i++) {
+                let txt = tr[i].textContent || tr[i].innerText;
+                tr[i].style.display = txt.toUpperCase().indexOf(input) > -1 ? '' : 'none';
+            }
+        }
+    </script>
+</body>
+</html>

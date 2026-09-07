@@ -1,0 +1,322 @@
+﻿* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f0f3f8;
+    color: #333;
+    padding-bottom: 40px;
+}
+
+.header {
+    background: linear-gradient(135deg, #1e5bb8, #4f8cff);
+    color: #fff;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+}
+
+.header h1 {
+    font-size: 1.4em;
+    font-weight: 600;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.btn {
+    display: inline-block;
+    background: #fff;
+    color: #1e5bb8;
+    text-decoration: none;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9em;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    background: #e4ecfa;
+    transform: translateY(-1px);
+}
+
+.btn-voltar {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 0.88em;
+    transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-voltar:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.btn-salvar {
+    background: #28a745;
+    color: white;
+    padding: 12px 24px;
+    font-size: 1em;
+    border-radius: 8px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+    width: 100%;
+}
+
+.btn-salvar:hover {
+    background: #218838;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 20px auto;
+    padding: 0 15px;
+}
+
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 18px;
+    margin-top: 20px;
+}
+
+.dash-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px;
+    text-decoration: none;
+    color: #2c3e50;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-top: 4px solid #4f8cff;
+}
+
+.dash-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 22px rgba(79, 140, 255, 0.2);
+}
+
+.dash-card .icon {
+    font-size: 2.4em;
+    margin-bottom: 8px;
+}
+
+.dash-card h3 {
+    font-size: 1.1em;
+    margin-bottom: 4px;
+}
+
+.dash-card .contador {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #1e5bb8;
+    margin-top: 4px;
+}
+
+.dash-card p {
+    font-size: 0.82em;
+    color: #7f8c8d;
+}
+
+.form-painel {
+    background: #fff;
+    padding: 24px;
+    border-radius: 12px;
+    max-width: 700px;
+    margin: 20px auto;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.07);
+}
+
+.form-painel h3 {
+    margin-bottom: 15px;
+    color: #1e5bb8;
+    border-bottom: 2px solid #eef2f7;
+    padding-bottom: 8px;
+}
+
+label {
+    display: block;
+    margin-top: 12px;
+    margin-bottom: 4px;
+    font-weight: 600;
+    font-size: 0.9em;
+    color: #444;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccd5e0;
+    border-radius: 6px;
+    font-size: 0.95em;
+    outline: none;
+    font-family: inherit;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: #4f8cff;
+    box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.15);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 70px;
+}
+
+.tabela-container {
+    background: #fff;
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 20px;
+    overflow-x: auto;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.06);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92em;
+}
+
+th, td {
+    padding: 12px 10px;
+    text-align: left;
+    border-bottom: 1px solid #edf1f5;
+}
+
+th {
+    background: #f7f9fc;
+    color: #4a5568;
+    font-weight: 700;
+}
+
+tr:hover {
+    background: #f8fbff;
+}
+
+@media (max-width: 600px) {
+    .header h1 { font-size: 1.1em; }
+    .dashboard-cards { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .dash-card { padding: 14px 8px; }
+    .dash-card .icon { font-size: 1.8em; }
+    .form-painel { padding: 16px; margin: 10px; }
+}
+
+/* HVAC STYLES */
+.hvac-container { max-width: 900px; margin: 20px auto; padding: 15px; }
+.hvac-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+.card-tech { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+.form-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #475569; }
+.input-hvac { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 0.95rem; }
+.tabs { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+.tab-btn { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+.tab-btn.active { background: #00A6FF; color: white; border-color: #00A6FF; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.result-box { background: #f8fafc; border-left: 4px solid #00A6FF; padding: 15px; border-radius: 4px; margin-top: 15px; }
+.status-badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; }
+.badge-success { background: #dcfce7; color: #15803d; }
+.badge-warning { background: #fef3c7; color: #b45309; }
+.badge-danger  { background: #fee2e2; color: #b91c1c; }
+.badge-info    { background: #e0f2fe; color: #0369a1; }
+.check-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8fafc; border-radius: 6px; margin-bottom: 6px; cursor: pointer; }
+.btn-primary-hvac, .btn-whatsapp, .btn-back { display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; border-radius: 6px; font-weight: bold; text-decoration: none; border: none; cursor: pointer; }
+.btn-primary-hvac { background: #00A6FF; color: white; }
+.btn-whatsapp { background: #25D366; color: white; width: 100%; box-sizing: border-box; }
+.btn-back { background: #64748b; color: white; font-size: 0.85rem; }
+.tech-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.tech-table th, .tech-table td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+.tech-table th { background: #f1f5f9; color: #1e293b; }
+
+
+/* Menu empresa no header */
+.header-user-menu { position: relative; display: flex; align-items: center; gap: 10px; }
+.header-company-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.35);
+    padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9rem;
+    text-decoration: none; max-width: 260px;
+}
+.header-company-btn:hover { background: rgba(255,255,255,0.28); }
+.header-company-btn .chev { font-size: 0.7rem; opacity: 0.9; }
+.header-dropdown {
+    display: none; position: absolute; right: 0; top: calc(100% + 8px);
+    background: #fff; min-width: 240px; border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.2); z-index: 1000; overflow: hidden;
+    border: 1px solid #e2e8f0;
+}
+.header-dropdown.show { display: block; }
+.header-dropdown a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; color: #0f172a; text-decoration: none; font-weight: 600; font-size: 0.92rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+.header-dropdown a:hover { background: #f8fafc; color: #00A6FF; }
+.header-dropdown a:last-child { border-bottom: none; }
+.header-dropdown .dd-head {
+    padding: 12px 16px; background: #f1f5f9; font-size: 0.75rem; color: #64748b;
+    font-weight: bold; text-transform: uppercase;
+}
+.video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+.video-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+.video-card iframe { width: 100%; height: 180px; border: 0; display: block; background: #0b1329; }
+.video-card .body { padding: 14px; }
+.video-card h3 { margin: 0 0 6px; font-size: 1.05rem; color: #0f172a; }
+.video-card p { margin: 0; color: #64748b; font-size: 0.88rem; }
+.video-card .tag { display: inline-block; margin-top: 10px; background: #e0f2fe; color: #0369a1; padding: 3px 10px; border-radius: 99px; font-size: 0.75rem; font-weight: bold; }
+
+
+/* MENU EMPRESA - FIX */
+.header { display: flex !important; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.header-user-menu { position: relative; display: inline-block; z-index: 9999; }
+.header-company-btn {
+    display: inline-flex !important; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.22) !important; color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.4) !important;
+    padding: 10px 16px !important; border-radius: 8px !important;
+    cursor: pointer !important; font-weight: bold !important; font-size: 0.95rem !important;
+    font-family: inherit;
+}
+.header-company-btn:hover { background: rgba(255,255,255,0.35) !important; }
+.header-dropdown {
+    display: none; position: absolute; right: 0; top: 100%; margin-top: 6px;
+    background: #ffffff !important; min-width: 260px;
+    border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    z-index: 10000 !important; border: 1px solid #e2e8f0; overflow: hidden;
+}
+.header-dropdown.show { display: block !important; }
+.header-dropdown .dd-head {
+    padding: 10px 16px; background: #f1f5f9; color: #64748b;
+    font-size: 0.72rem; font-weight: bold; text-transform: uppercase;
+}
+.header-dropdown a {
+    display: block !important; padding: 14px 16px !important;
+    color: #0f172a !important; text-decoration: none !important;
+    font-weight: 600 !important; font-size: 0.95rem !important;
+    border-bottom: 1px solid #f1f5f9; background: #fff !important;
+}
+.header-dropdown a:hover { background: #e0f2fe !important; color: #0369a1 !important; }

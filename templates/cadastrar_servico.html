@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Novo Serviço</title>
+</head>
+<body>
+    <h2>Registrar Novo Serviço</h2>
+    <form method="post">
+        Cliente:<br>
+        <select name="cliente_id" required>
+          {% for c in clientes %}
+            <option value="{{ c[0] }}">{{ c[1] }}</option>
+          {% endfor %}
+        </select><br>
+        Data/Hora:<br> <input type="text" name="data_e_hora" placeholder="Ex: 2024-09-04 14:00"><br>
+        Tipo de Serviço:<br>
+        <select name="tipo_servico">
+            <option value="Limpeza">Limpeza</option>
+            <option value="Instalação">Instalação</option>
+            <option value="Manutenção">Manutenção</option>
+        </select><br>
+        Descrição:<br> <input type="text" name="descricao"><br>
+        Valor:<br> <input type="number" step="0.01" name="valor"><br>
+        Status:<br>
+        <select name="status">
+            <option value="Pendente">Pendente</option>
+            <option value="Concluído">Concluído</option>
+            <option value="Cancelado">Cancelado</option>
+        </select><br>
+        <br>
+        <input type="submit" value="Salvar Serviço">
+    </form>
+</body>
+</html>

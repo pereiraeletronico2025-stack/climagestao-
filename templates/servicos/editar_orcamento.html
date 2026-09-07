@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Editar Orçamento - {{ config.nome_empresa }}</title>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='hvac-container'>
+        <header class='hvac-header'>
+            <a href='/orcamento-rapido' class='btn-back'> Voltar aos Orçamentos</a>
+            <h2> Editar Orçamento #{{ o[0] }}</h2>
+        </header>
+
+        <div class='card-tech'>
+            <form method='POST'>
+                <div class='form-grid'>
+                    <div class='form-group'>
+                        <label>Cliente:</label>
+                        <input type='text' name='cliente_nome' class='input-hvac' value='{{ o[2] }}' required>
+                    </div>
+                    <div class='form-group'>
+                        <label>WhatsApp:</label>
+                        <input type='text' name='telefone' class='input-hvac' value='{{ o[3] }}' required>
+                    </div>
+                    <div class='form-group'>
+                        <label>Equipamento:</label>
+                        <input type='text' name='equipamento' class='input-hvac' value='{{ o[4] or "" }}'>
+                    </div>
+                    <div class='form-group'>
+                        <label>Serviço:</label>
+                        <input type='text' name='servico' class='input-hvac' value='{{ o[5] }}' required>
+                    </div>
+                    <div class='form-group'>
+                        <label>Mão de Obra (R$):</label>
+                        <input type='number' step='0.01' name='valor_mo' class='input-hvac' value='{{ o[6] or 0 }}' required>
+                    </div>
+                    <div class='form-group'>
+                        <label>Peças / Materiais (R$):</label>
+                        <input type='number' step='0.01' name='valor_pecas' class='input-hvac' value='{{ o[7] or 0 }}' required>
+                    </div>
+                    <div class='form-group' style='grid-column: span 2;'>
+                        <label>Garantia:</label>
+                        <select name='garantia' class='input-hvac'>
+                            <option value='90 dias (Padrão Legal)' {% if o[9] == '90 dias (Padrão Legal)' %}selected{% endif %}>90 dias (Padrão Legal)</option>
+                            <option value='6 meses' {% if o[9] == '6 meses' %}selected{% endif %}>6 meses</option>
+                            <option value='1 ano' {% if o[9] == '1 ano' %}selected{% endif %}>1 ano</option>
+                            <option value='Apenas Diagnóstico' {% if o[9] == 'Apenas Diagnóstico' %}selected{% endif %}>Apenas Diagnóstico</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type='submit' class='btn-primary-hvac' style='margin-top: 20px;'> Salvar Alterações do Orçamento</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

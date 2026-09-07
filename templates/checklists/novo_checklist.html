@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Executar Checklist - {{ config.nome_empresa }}</title>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='hvac-container'>
+        <header class='hvac-header'>
+            <a href='/checklists' class='btn-back'> Voltar</a>
+            <h2> Executar Checklist Técnico</h2>
+        </header>
+
+        <div class='card-tech' style='margin-bottom: 15px; background: #e0f2fe; border-color: #00A6FF;'>
+            <p style='margin: 0; color: #0369a1;'> Precisa criar novos tipos de procedimento? <a href='/checklists/tipos' style='color: #0369a1; font-weight: bold;'>Clique aqui para Gerenciar</a></p>
+        </div>
+
+        <form method='POST' class='card-tech'>
+            <div class='form-grid'>
+                <div class='form-group'>
+                    <label>Tipo de Procedimento:</label>
+                    <select name='tipo_id' id='tipo-select' class='input-hvac' onchange='window.location.href="?tipo="+this.value' required>
+                        <option value=''>-- Selecione o Procedimento --</option>
+                        {% for t in tipos %}
+                            <option value='{{ t[0] }}' {% if tipo_selecionado and tipo_selecionado == t[0] %}selected{% endif %}>{{ t[1] }} {{ t[2] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class='form-group'>
+                    <label>Cliente:</label>
+                    <select name='cliente_id' class='input-hvac'>
+                        <option value=''>-- Selecione (Opcional) --</option>
+                        {% for c in clientes %}<option value='{{ c[0] }}'>{{ c[1] }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            {% if itens_do_tipo %}
+                <input type='hidden' name='tipo_nome' value='{{ tipo_nome_selecionado }}'>
+                <h4 style='margin-top: 20px;'>Passo a Passo - Marque conforme execução:</h4>
+                {% for item in itens_do_tipo %}
+                    <label class='check-item'>
+                        <input type='checkbox' name='item_{{ item[0] }}' value='{{ item[2] }}'>
+                        <strong>{{ loop.index }}.</strong> {{ item[2] }}
+                    </label>
+                {% endfor %}
+
+                <div class='form-group' style='margin-top: 20px;'>
+                    <label>Parâmetros Medidos / Observações:</label>
+                    <textarea name='observacoes' class='input-hvac' rows='3' placeholder='Ex: Tensão 220V, Corrente 4.2A, Pressão 125 PSI R410A, Temp Insuflamento 10°C...'></textarea>
+                </div>
+
+                <button type='submit' class='btn-primary-hvac' style='margin-top: 10px;'> Finalizar e Salvar Checklist</button>
+            {% elif tipo_selecionado %}
+                <div style='padding: 20px; text-align: center; color: #b45309; background: #fef3c7; border-radius: 6px; margin-top: 15px;'>
+                     Este procedimento ainda não tem itens cadastrados. <a href='/checklists/tipos/{{ tipo_selecionado }}/itens' style='color: #b45309; font-weight: bold;'>Clique aqui para adicionar os passos</a>.
+                </div>
+            {% else %}
+                <div style='padding: 20px; text-align: center; color: #64748b; margin-top: 15px;'>
+                     Selecione um tipo de procedimento acima para ver os itens do checklist.
+                </div>
+            {% endif %}
+        </form>
+    </div>
+</body>
+</html>

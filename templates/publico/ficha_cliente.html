@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Ficha do Cliente - {{ config.nome_empresa }}</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+    <style>
+        .ficha-header { background: linear-gradient(135deg, #00A6FF, #0369a1); color:#fff; padding:25px; border-radius:12px; margin-bottom:20px; }
+        .ficha-header h2 { margin:0; font-size:1.8rem; }
+        .ficha-header p { margin:5px 0; opacity:0.95; }
+        .info-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:15px; margin-bottom:20px; }
+        .info-card { background:#fff; padding:15px; border-radius:8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left:4px solid #00A6FF; }
+        .info-card small { color:#64748b; text-transform:uppercase; font-size:0.75rem; font-weight:bold; }
+        .info-card strong { display:block; font-size:1.1rem; margin-top:4px; color:#0f172a; }
+    </style>
+</head>
+<body>
+    <div class='hvac-container' style='max-width: 1000px;'>
+        <header class='hvac-header'>
+            <a href='/agendamentos-online' class='btn-back'> Voltar</a>
+            <h2> Ficha Completa do Cliente</h2>
+        </header>
+
+        {% if a %}
+        <!-- CABEÇALHO DO CLIENTE -->
+        <div class='ficha-header'>
+            <h2>{{ a[1] }}</h2>
+            <p> <a href='https://api.whatsapp.com/send?phone=55{{ a[2]|replace(" ","")|replace("-","")|replace("(","")|replace(")","") }}' target='_blank' style='color:#fff; text-decoration:underline;'>{{ a[2] }}</a></p>
+            <p> {{ a[3] }} - {{ a[4] or '' }}</p>
+            {% if a[3] %}
+            <p><a href='https://www.google.com/maps/search/?api=1&query={{ a[3]|urlencode }}+{{ (a[4] or "")|urlencode }}' target='_blank' style='color:#fff; background:rgba(255,255,255,0.2); padding:6px 12px; border-radius:6px; text-decoration:none; font-weight:bold;'> Abrir Rota no GPS</a></p>
+            {% endif %}
+        </div>
+
+        <!-- KPIs -->
+        <div class='info-grid'>
+            <div class='info-card' style='border-color:#10b981;'>
+                <small> Valor do Serviço</small>
+                <strong style='color:#10b981;'>R$ {{ "%.2f"|format((a[11] or 0)|float) }}</strong>
+            </div>
+            <div class='info-card' style='border-color:#3b82f6;'>
+                <small> Forma de Pagamento</small>
+                <strong>{{ a[12] or 'Pix' }}</strong>
+            </div>
+            <div class='info-card' style='border-color:{% if a[13] == "Pago" %}#10b981{% else %}#ef4444{% endif %};'>
+                <small>Status Pagamento</small>
+                <strong style='color:{% if a[13] == "Pago" %}#10b981{% else %}#ef4444{% endif %};'>
+                    {% if a[13] == 'Pago' %} PAGO{% else %} PENDENTE{% endif %}
+                </strong>
+            </div>
+            <div class='info-card' style='border-color:#8b5cf6;'>
+                <small>Status Serviço</small>
+                <strong>{{ a[14] or 'Pendente' }}</strong>
+            </div>
+            <div class='info-card' style='border-color:#f59e0b;'>
+                <small> Vencimento</small>
+                <strong>{{ a[15] or 'Sem vencimento' }}</strong>
+            </div>
+            <div class='info-card'>
+                <small> Funcionário</small>
+                <strong>{{ a[17] or 'Não atribuído' }}</strong>
+            </div>
+        </div>
+
+        <!-- DETALHES DO SERVIÇO -->
+        <div class='card-tech'>
+            <h3 style='margin-top:0; color:#00A6FF;'> Detalhes do Serviço</h3>
+            <table class='tech-table'>
+                <tr><td><strong>Serviço:</strong></td><td>{{ a[5] }}</td></tr>
+                <tr><td><strong>Equipamento:</strong></td><td>{{ a[6] or 'Não informado' }}</td></tr>
+                <tr><td><strong>Data do Agendamento:</strong></td><td>{{ a[7] }}  {{ a[8] }}</td></tr>
+                <tr><td><strong>Data da Solicitação:</strong></td><td>{{ a[10][:16] if a[10] else '' }}</td></tr>
+                <tr><td><strong>Observação do Cliente:</strong></td><td>{{ a[19] or 'Nenhuma' }}</td></tr>
+                <tr><td><strong>Observação Interna:</strong></td><td>{{ a[18] or 'Nenhuma' }}</td></tr>
+            </table>
+        </div>
+
+        <div style='display:flex; gap:10px; margin-top:20px;'>
+            <a href='/agendamento/editar/{{ a[0] }}' class='btn-primary-hvac' style='flex:1;'> Editar Ordem de Serviço</a>
+            <a href='https://api.whatsapp.com/send?phone=55{{ a[2]|replace(" ","")|replace("-","")|replace("(","")|replace(")","") }}&text=Ol%C3%A1%20{{ a[1]|urlencode }}!' target='_blank' class='btn-whatsapp' style='flex:1;'> Falar no WhatsApp</a>
+        </div>
+        {% else %}
+        <div class='card-tech' style='text-align:center; padding:30px;'>
+            <p style='color:#ef4444; font-weight:bold;'>Agendamento não encontrado.</p>
+            <a href='/agendamentos-online' class='btn-back'> Voltar para Agendamentos</a>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Executar Serviço - ClimaGestão</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+body { background: #0b1329; color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; }
+.card-exec { max-width: 800px; margin: 0 auto; background: #152243; border-radius: 12px; padding: 25px; border: 1px solid #223767; }
+.exec-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #223767; padding-bottom: 15px; margin-bottom: 20px; }
+.btn-back-exec { background: #64748b; color: #fff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; }
+.photo-box { background: #0b1329; border: 1px solid #223767; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
+.photo-box h4 { margin: 0 0 10px 0; color: #00A6FF; font-size: 1.05rem; }
+.btn-camera { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #00A6FF; color: #fff; padding: 12px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-size: 0.95rem; }
+.btn-galeria { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #475569; color: #fff; padding: 12px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-size: 0.95rem; }
+.btn-clear { background: #fef3c7; color: #b45309; padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+.file-input-hidden { display: none; }
+.img-preview { width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; margin-top: 10px; display: none; background: #000; border: 1px solid #223767; }
+.pad-signature { width: 100%; height: 180px; border: 2px dashed #00A6FF; border-radius: 8px; background: #fff; touch-action: none; margin-top: 5px; }
+.btn-submit-exec { width: 100%; background: #00A6FF; color: #fff; border: none; padding: 16px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-top: 20px; }
+.btn-zap-exec { width: 100%; background: #25D366; color: #fff; border: none; padding: 16px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-top: 12px; text-decoration: none; display: block; text-align: center; box-sizing: border-box; }
+</style>
+</head>
+<body>
+<div class="card-exec">
+    <div class="exec-header">
+        <a href="/fluxo" class="btn-back-exec"> Voltar para Esteira</a>
+        <h3 style="margin: 0; color: #00A6FF;"> Fotos, Checklist & Assinatura</h3>
+    </div>
+
+    <h2 style="margin: 0 0 5px 0;">Cliente: {{ nome_cliente }} (OS #{{ ag_id }})</h2>
+    <p style="color: #94a3b8; margin: 0 0 20px 0;">Serviço: {{ tipo_servico }}</p>
+
+    <form method="POST" action="/fluxo/executar/salvar/{{ ag_id }}" onsubmit="return prepararEnvio()">
+        <div class="form-grid">
+            <!-- 1. FOTO ANTES -->
+            <div class="photo-box">
+                <h4> 1. Foto ANTES da Manutenção</h4>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <label class="btn-camera">
+                         Tirar Foto (Câmera)
+                        <input type="file" class="file-input-hidden" accept="image/*" capture="environment" onchange="carregarFoto(this, 'prev-antes', 'foto_antes')">
+                    </label>
+                    <label class="btn-galeria">
+                         Galeria
+                        <input type="file" class="file-input-hidden" accept="image/*" onchange="carregarFoto(this, 'prev-antes', 'foto_antes')">
+                    </label>
+                    <button type="button" class="btn-clear" onclick="limparFoto('prev-antes', 'foto_antes')"> Limpar</button>
+                </div>
+                <img id="prev-antes" class="img-preview" alt="Foto Antes">
+                <input type="hidden" name="foto_antes" id="foto_antes" value="">
+                <p style="font-size: 0.78rem; color: #94a3b8; margin: 8px 0 0 0;">No celular, o botão azul abre a câmera do aparelho diretamente.</p>
+            </div>
+
+            <!-- 2. FOTO DEPOIS -->
+            <div class="photo-box">
+                <h4> 2. Foto DEPOIS do Serviço</h4>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <label class="btn-camera">
+                         Tirar Foto (Câmera)
+                        <input type="file" class="file-input-hidden" accept="image/*" capture="environment" onchange="carregarFoto(this, 'prev-depois', 'foto_depois')">
+                    </label>
+                    <label class="btn-galeria">
+                         Galeria
+                        <input type="file" class="file-input-hidden" accept="image/*" onchange="carregarFoto(this, 'prev-depois', 'foto_depois')">
+                    </label>
+                    <button type="button" class="btn-clear" onclick="limparFoto('prev-depois', 'foto_depois')"> Limpar</button>
+                </div>
+                <img id="prev-depois" class="img-preview" alt="Foto Depois">
+                <input type="hidden" name="foto_depois" id="foto_depois" value="">
+            </div>
+        </div>
+
+        <!-- 3. ASSINATURA DIGITAL -->
+        <div style="margin-top: 20px;">
+            <label style="font-weight: bold; color: #94a3b8; display: block; margin-bottom: 6px;"> 3. Assinatura Digital do Cliente (Assine abaixo com o dedo):</label>
+            <canvas id="canvas-pad" class="pad-signature"></canvas>
+            <input type="hidden" name="assinatura_cliente" id="input-assinatura" value="">
+            <button type="button" onclick="limparCanvas()" class="btn-clear" style="margin-top: 8px;"> Limpar Assinatura</button>
+        </div>
+
+        <!-- 4. OBSERVAÇÕES TÉCNICAS -->
+        <div style="margin-top: 20px;">
+            <label style="font-weight: bold; color: #94a3b8; display: block; margin-bottom: 6px;"> Parâmetros Medidos / Observações Técnicas:</label>
+            <textarea name="observacao_interna" id="obs-tecnica" class="input-hvac" rows="3" placeholder="Ex: Tensão 220V, Pressão 125 PSI R410A, Temp Insuflamento 10°C...">{{ observacao_interna }}</textarea>
+        </div>
+
+        <button type="submit" class="btn-submit-exec"> Finalizar Execução e Avançar para Pagamento</button>
+    </form>
+
+    <!-- ENVIAR WHATSAPP -->
+    <button type="button" onclick="enviarWhatsApp()" class="btn-zap-exec"> Enviar Relatório no WhatsApp do Cliente</button>
+</div>
+
+<script>
+    // FOTOS BASE64 COM COMPRESSÃO
+    function carregarFoto(input, imgId, inputHiddenId) {
+        var file = input.files && input.files[0];
+        if (!file) return;
+
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var img = new Image();
+            img.onload = function() {
+                var maxDimension = 1200;
+                var scale = Math.min(1, maxDimension / img.width);
+                var c = document.createElement('canvas');
+                c.width = Math.round(img.width * scale);
+                c.height = Math.round(img.height * scale);
+                var ctx = c.getContext('2d');
+                ctx.drawImage(img, 0, 0, c.width, c.height);
+
+                var compressedBase64 = c.toDataURL('image/jpeg', 0.7);
+                var preview = document.getElementById(imgId);
+                preview.src = compressedBase64;
+                preview.style.display = 'block';
+                document.getElementById(inputHiddenId).value = compressedBase64;
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function limparFoto(imgId, inputHiddenId) {
+        var preview = document.getElementById(imgId);
+        preview.src = '';
+        preview.style.display = 'none';
+        document.getElementById(inputHiddenId).value = '';
+    }
+
+    // CANVAS ASSINATURA
+    var canvas = document.getElementById('canvas-pad');
+    var ctx = canvas.getContext('2d');
+    var desenhando = false;
+
+    function ajustarCanvas() {
+        canvas.width = canvas.parentElement.clientWidth || 300;
+        canvas.height = 180;
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#0f172a';
+    }
+    window.addEventListener('load', ajustarCanvas);
+    window.addEventListener('resize', ajustarCanvas);
+
+    function getPos(e) {
+        var rect = canvas.getBoundingClientRect();
+        var x = e.touches ? e.touches[0].clientX : e.clientX;
+        var y = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: x - rect.left, y: y - rect.top };
+    }
+
+    function iniciarDesenho(e) { desenhando = true; var pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); e.preventDefault(); }
+    function desenhar(e) { if(!desenhando) return; var pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); e.preventDefault(); }
+    function pararDesenho() { desenhando = false; }
+
+    canvas.addEventListener('mousedown', iniciarDesenho);
+    canvas.addEventListener('mousemove', desenhar);
+    canvas.addEventListener('mouseup', pararDesenho);
+    canvas.addEventListener('mouseleave', pararDesenho);
+
+    canvas.addEventListener('touchstart', iniciarDesenho, {passive: false});
+    canvas.addEventListener('touchmove', desenhar, {passive: false});
+    canvas.addEventListener('touchend', pararDesenho);
+
+    function limparCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+    function prepararEnvio() {
+        document.getElementById('input-assinatura').value = canvas.toDataURL('image/png');
+        return true;
+    }
+
+    function enviarWhatsApp() {
+        var tel = "{{ telefone }}".replace(/\D/g, '');
+        var nome = "{{ nome_cliente }}";
+        var srv = "{{ tipo_servico }}";
+        var emp = "{{ config.nome_empresa or 'ClimaGestão' }}";
+        var obs = document.getElementById('obs-tecnica').value;
+        var temAntes = document.getElementById('foto_antes').value ? ' Registrada' : ' Não anexada';
+        var temDepois = document.getElementById('foto_depois').value ? ' Registrada' : ' Não anexada';
+
+        if(!tel) { alert("Telefone do cliente não encontrado!"); return; }
+
+        var txt = `*RELATÓRIO TÉCNICO DE MANUTENÇÃO - ${emp}*%0A%0A` +
+                  ` *Cliente:* ${nome}%0A` +
+                  ` *Serviço:* ${srv}%0A` +
+                  ` *Foto ANTES:* ${temAntes}%0A` +
+                  ` *Foto DEPOIS:* ${temDepois}%0A`;
+
+        if(obs) { txt += `%0A *Observações Técnicas:*%0A${encodeURIComponent(obs)}%0A`; }
+        txt += `%0A_Serviço executado com sucesso! Qualquer dúvida, estamos à disposição._`;
+
+        window.open(`https://api.whatsapp.com/send?phone=55${tel}&text=${txt}`, '_blank');
+    }
+</script>
+</body>
+</html>

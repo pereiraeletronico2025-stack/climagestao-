@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Videos e Cursos - {{ config.nome_empresa or 'ClimaGestao' }}</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.video-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.08);border:1px solid #e2e8f0}
+.video-card iframe{width:100%;height:180px;border:0;display:block;background:#0b1329}
+.video-card .body{padding:14px}
+.video-card h3{margin:0 0 6px;font-size:1.05rem;color:#0f172a}
+.video-card p{margin:0;color:#64748b;font-size:.88rem}
+.tag{display:inline-block;margin-top:10px;background:#e0f2fe;color:#0369a1;padding:3px 10px;border-radius:99px;font-size:.75rem;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="hvac-container" style="max-width:1100px;">
+  <header class="hvac-header">
+    <a href="/painel" class="btn-back">Painel</a>
+    <h2>Videos e Cursos</h2>
+  </header>
+
+  <div class="card-tech" style="margin-bottom:18px;background:linear-gradient(135deg,#0b1329,#152243);color:#fff;border:none;">
+    <h3 style="margin:0 0 6px;color:#00A6FF;">Aprenda a usar o ClimaGestao</h3>
+    <p style="margin:0;color:#94a3b8;font-size:.95rem;">Conteudo de apoio para o tecnico e para a equipe.</p>
+  </div>
+
+  {% if is_admin %}
+  <div class="card-tech" style="margin-bottom:18px;">
+    <h3 style="margin-top:0;">Publicar video (admin)</h3>
+    <form method="POST" action="/videos-cursos/add" class="form-grid">
+      <div class="form-group" style="grid-column:span 2;">
+        <label>Titulo</label>
+        <input class="input-hvac" name="titulo" required placeholder="Ex: Como usar a esteira de servicos">
+      </div>
+      <div class="form-group" style="grid-column:span 2;">
+        <label>URL do YouTube</label>
+        <input class="input-hvac" name="url_video" required placeholder="https://www.youtube.com/watch?v=... ou /embed/...">
+      </div>
+      <div class="form-group">
+        <label>Categoria</label>
+        <input class="input-hvac" name="categoria" value="Geral">
+      </div>
+      <div class="form-group">
+        <label>Ordem</label>
+        <input class="input-hvac" type="number" name="ordem" value="0">
+      </div>
+      <div class="form-group" style="grid-column:span 2;">
+        <label>Descricao</label>
+        <textarea class="input-hvac" name="descricao" rows="2"></textarea>
+      </div>
+      <button type="submit" class="btn-primary-hvac" style="width:auto;">Publicar</button>
+    </form>
+    <p style="margin:10px 0 0;font-size:.85rem;color:#64748b;">Admin tambem gerencia videos em <a href="/admin">/admin</a>.</p>
+  </div>
+  {% endif %}
+
+  <div class="video-grid">
+    {% for v in videos %}
+    <div class="video-card">
+      <iframe src="{{ v[3] }}" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+      <div class="body">
+        <h3>{{ v[1] }}</h3>
+        <p>{{ v[2] or '' }}</p>
+        <span class="tag">{{ v[4] or 'Geral' }}</span>
+        {% if is_admin %}
+        <div style="margin-top:10px;">
+          <a href="/videos-cursos/del/{{ v[0] }}" style="color:#ef4444;font-weight:bold;font-size:.85rem;text-decoration:none;"
+             onclick="return confirm('Remover este video?')">Remover</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div class="card-tech" style="grid-column:1/-1;text-align:center;color:#64748b;">
+      Nenhum video publicado ainda.
+      {% if is_admin %}<br>Use o formulario acima ou o Painel Admin para adicionar.{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Clima Gestão - Agenda de Serviços</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Clima Gestão</h1>
+        <div class="nav-btns">
+            <a href="/cliente/novo" class="btn">+ Novo Cliente</a>
+            <a href="/servico/novo" class="btn">+ Novo Serviço</a>
+        </div>
+    </div>
+    <h2>Próximos Serviços</h2>
+
+    <div class="card-list">
+        {% if servicos %}
+            {% for s in servicos %}
+                <div class="card">
+                    <div class="card-header">
+                        <span class="data">{{ s[2] }}</span>
+                        <span class="tipo">{{ s[3] }}</span>
+                    </div>
+                    <div class="card-body">
+                        <strong>Cliente:</strong> {{ s[1] }}<br>
+                        <strong>Status:</strong>
+                        <span class="status {{ s[4]|lower }}">{{ s[4] }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="card">
+                <div class="card-body">Nenhum serviço agendado.</div>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

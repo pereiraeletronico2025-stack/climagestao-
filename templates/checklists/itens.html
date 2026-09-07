@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Itens do Checklist - {{ config.nome_empresa }}</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='hvac-container'>
+        <header class='hvac-header'>
+            <a href='/checklists/tipos' class='btn-back'> Voltar</a>
+            <h2>{{ tipo[1] }} {{ tipo[2] }} - Itens</h2>
+        </header>
+
+        <div class='card-tech' style='margin-bottom: 20px;'>
+            <h3> Adicionar Novo Item ao Passo a Passo</h3>
+            <form method='POST' action='/checklists/itens/{{ tipo[0] }}/adicionar'>
+                <div class='form-group'>
+                    <label>Descrição do Item / Passo:</label>
+                    <input type='text' name='descricao' class='input-hvac' placeholder='Ex: Verificar corrente no compressor com amperímetro' required>
+                </div>
+                <button type='submit' class='btn-primary-hvac' style='width: auto; margin-top: 10px;'> Adicionar Item</button>
+            </form>
+        </div>
+
+        <div class='card-tech'>
+            <h3> Itens do Passo a Passo ({{ itens|length }} itens)</h3>
+            <table class='tech-table'>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Descrição do Item</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in itens %}
+                    <tr>
+                        <td><strong>{{ loop.index }}</strong></td>
+                        <td>
+                            <form method='POST' action='/checklists/itens/{{ item[0] }}/editar' style='display: flex; gap: 8px;'>
+                                <input type='text' name='descricao' value='{{ item[2] }}' class='input-hvac' style='flex:1;' required>
+                                <button type='submit' class='status-badge badge-success' style='border:none; cursor:pointer;'> Salvar</button>
+                            </form>
+                        </td>
+                        <td>
+                            <a href='/checklists/itens/{{ item[0] }}/excluir/{{ tipo[0] }}' class='status-badge badge-danger' style='text-decoration: none;' onclick='return confirm("Deseja excluir este item?")'> Excluir</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan='3' style='text-align: center; padding: 25px; color: #888;'>Nenhum item cadastrado. Comece adicionando o primeiro passo do procedimento acima!</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

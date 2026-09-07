@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Novo Cliente - Clima Gestão</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .block { margin-bottom: 25px; padding: 15px; background: #f8f8fd; border-radius: 10px; }
+        .inline-btn { margin-top: 7px; }
+        label { display:block; font-weight: 500;}
+        input, select, textarea { width:98%; padding:6px; margin-bottom:8px;}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Novo Cliente</h1>
+    </div>
+    <form method="post">
+
+        <div class="block">
+            <label>Nome:</label>
+            <input type="text" name="nome" required>
+
+            <label>Pessoa:</label>
+            <select name="tipo">
+                <option value="PF">Física</option>
+                <option value="PJ">Jurídica</option>
+            </select>
+
+            <label>CPF ou CNPJ:</label>
+            <input type="text" name="documento">
+
+            <label>Email:</label>
+            <input type="email" name="email">
+
+            <label>Telefone:</label>
+            <input type="text" name="telefone">
+
+            <label>Endereço:</label>
+            <input type="text" name="endereco">
+
+            <label>Observações:</label>
+            <textarea name="observacoes"></textarea>
+
+            <label>Data da 1ª visita:</label>
+            <input type="date" name="data_visita_inicial">
+
+            <label>Data de retorno programado:</label>
+            <input type="date" name="data_retorno_programado">
+        </div>
+
+        <div class="block">
+            <h3>Aparelhos de Ar-condicionado</h3>
+            <label>Marca:</label> <input type="text" name="aparelho_marca">
+            <label>Modelo:</label> <input type="text" name="aparelho_modelo">
+            <label>Capacidade (BTU):</label> <input type="text" name="aparelho_btu">
+            <label>Voltagem:</label> <input type="text" name="aparelho_voltagem">
+            <label>Local instalado:</label> <input type="text" name="aparelho_local">
+            <label>Data de instalação:</label> <input type="date" name="aparelho_data_instalacao">
+            <label>Obs. aparelho:</label> <input type="text" name="aparelho_observacoes">
+            <!-- Para múltiplos aparelhos: javascript para “adicionar mais” depois -->
+        </div>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Editar OS - {{ config.nome_empresa }}</title>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='hvac-container'>
+        <header class='hvac-header'>
+            <a href='/servicos' class='btn-back'> Voltar</a>
+            <h2> Editar Ordem de Serviço (OS #{{ servico[0] }})</h2>
+        </header>
+
+        <div class='card-tech'>
+            <form method='POST'>
+                <div class='form-grid'>
+                    <div class='form-group' style='grid-column: span 2;'>
+                        <label>Serviço Realizado:</label>
+                        <input type='text' name='descricao' class='input-hvac' value='{{ servico[2] }}' required>
+                    </div>
+
+                    <div class='form-group'>
+                        <label>Valor Total (R$):</label>
+                        <input type='number' name='valor' class='input-hvac' step='0.01' value='{{ servico[3] }}' required>
+                    </div>
+                    
+                    <div class='form-group'>
+                        <label>Forma de Pagamento:</label>
+                        <select name='forma_pagamento' class='input-hvac'>
+                            <option value='Pix' {% if servico[4] == 'Pix' %}selected{% endif %}>Pix</option>
+                            <option value='Dinheiro' {% if servico[4] == 'Dinheiro' %}selected{% endif %}>Dinheiro</option>
+                            <option value='Cartão de Crédito' {% if servico[4] == 'Cartão de Crédito' %}selected{% endif %}>Cartão de Crédito</option>
+                            <option value='Cartão de Débito' {% if servico[4] == 'Cartão de Débito' %}selected{% endif %}>Cartão de Débito</option>
+                            <option value='Boleto Bancário' {% if servico[4] == 'Boleto Bancário' %}selected{% endif %}>Boleto Bancário</option>
+                        </select>
+                    </div>
+
+                    <div class='form-group'>
+                        <label>Status do Serviço:</label>
+                        <select name='status_servico' class='input-hvac'>
+                            <option value='Orçamento' {% if servico[6] == 'Orçamento' %}selected{% endif %}> Apenas Orçamento</option>
+                            <option value='Fechado' {% if servico[6] == 'Fechado' %}selected{% endif %}> Fechado / Aprovado</option>
+                            <option value='Em Andamento' {% if servico[6] == 'Em Andamento' %}selected{% endif %}> Em Andamento</option>
+                            <option value='Concluído' {% if servico[6] == 'Concluído' %}selected{% endif %}> Concluído</option>
+                        </select>
+                    </div>
+
+                    <div class='form-group' style='background: #e0f2fe; padding: 10px; border-radius: 8px; border: 1px solid #00A6FF;'>
+                        <label style='color: #0369a1;'>Status do Pagamento:</label>
+                        <select name='status_pagamento' class='input-hvac' style='font-weight:bold; color: {% if servico[5] == "Pago" %}#10b981{% else %}#ef4444{% endif %};'>
+                            <option value='Pendente' {% if servico[5] == 'Pendente' %}selected{% endif %}> Pendente (A Receber)</option>
+                            <option value='Pago' {% if servico[5] == 'Pago' %}selected{% endif %}> Pago (Envia p/ Caixa)</option>
+                        </select>
+                        <small style='display:block; margin-top:5px; color:#0369a1; font-size:0.75rem;'>Se marcar como "Pago", o valor entra no Caixa do Dia automaticamente.</small>
+                    </div>
+                </div>
+
+                <button type='submit' class='btn-primary-hvac' style='margin-top: 20px;'> Salvar Alterações da OS</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

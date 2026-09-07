@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Aparelhos Cadastrados</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='header'>
+        <h1>❄️ Aparelhos Cadastrados</h1>
+        <div class='header-actions'>
+            <a href='/' class='btn-voltar'>⬅ Painel</a>
+            <a href='/aparelho/novo' class='btn'>+ Novo Aparelho</a>
+        </div>
+    </div>
+    <div class='container'>
+        <div class='tabela-container'>
+            <table>
+                <tr style='background: #f0f4f9;'>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>BTU</th>
+                    <th>Voltagem</th>
+                    <th>Local</th>
+                    <th>Data Inst.</th>
+                    <th style='text-align: center; min-width: 170px;'>Acoes</th>
+                </tr>
+                {% for a in aparelhos %}
+                <tr>
+                    <td>#{{ a[0] }}</td>
+                    <td><strong>{{ a[1] }}</strong></td>
+                    <td>{{ a[2] }}</td>
+                    <td>{{ a[3] or '-' }}</td>
+                    <td>{{ a[4] or '-' }}</td>
+                    <td>{{ a[5] or '-' }}</td>
+                    <td>{{ a[6] or '-' }}</td>
+                    <td>{{ a[7] or '-' }}</td>
+                    <td style='text-align: center;'>
+                        <div style='display: flex; gap: 8px; justify-content: center;'>
+                            <a href='/aparelho/{{ a[0] }}/editar' style='background: #ff9800; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.85em; display: inline-block;'>
+                                ✏️ Editar
+                            </a>
+                            <form method='post' action='/aparelho/{{ a[0] }}/excluir' onsubmit="return confirm('Deseja realmente apagar este aparelho?');" style='display: inline; margin: 0;'>
+                                <button type='submit' style='background: #d9534f; color: white; padding: 6px 12px; border-radius: 6px; border: none; font-weight: bold; font-size: 0.85em; cursor: pointer;'>
+                                    🗑️ Apagar
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% if aparelhos|length == 0 %}
+                <p style='padding: 15px; color: #888;'>Nenhum aparelho cadastrado ainda.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Boleto - {{ dados.cliente_nome }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #fff; color: #000; padding: 20px; }
+        .boleto-container { max-width: 800px; margin: 0 auto; border: 1px solid #000; padding: 0; }
+        .b-header { display: flex; border-bottom: 2px solid #000; }
+        .b-logo { width: 150px; padding: 10px; font-weight: bold; font-size: 24px; border-right: 2px solid #000; }
+        .b-banco { flex: 1; padding: 10px; font-size: 20px; font-weight: bold; text-align: right; }
+        .linha { display: flex; border-bottom: 1px solid #000; }
+        .celula { padding: 5px; border-right: 1px solid #000; flex: 1; font-size: 12px; }
+        .celula:last-child { border-right: none; }
+        .celula span { display: block; font-size: 10px; color: #555; }
+        .celula strong { display: block; font-size: 14px; margin-top: 5px; }
+        .valor-destaque { background: #f0f0f0; }
+        .instrucoes { padding: 15px; font-size: 12px; min-height: 150px; }
+        .codigo-barras { text-align: center; padding: 20px; }
+        .barcode-lines { display: inline-block; width: 80%; height: 60px; background: repeating-linear-gradient(90deg, #000, #000 2px, #fff 2px, #fff 4px, #000 4px, #000 5px, #fff 5px, #fff 8px); }
+        @media print { .btn-print { display: none; } }
+    </style>
+</head>
+<body>
+    <div style='max-width: 800px; margin: 0 auto 20px auto; text-align: right;'>
+        <button class='btn-print' onclick='window.print()' style='padding: 10px 20px; font-size: 16px; cursor: pointer; background: #000; color: #fff; border: none;'> Imprimir / Salvar PDF</button>
+    </div>
+
+    <div class='boleto-container'>
+        <div class='b-header'>
+            <div class='b-logo'>{{ config.nome_empresa or 'ClimaGestão' }}</div>
+            <div class='b-banco'>RECIBO DE PAGAMENTO / BOLETO PADRÃO</div>
+        </div>
+        <div class='linha'>
+            <div class='celula'><span>Local de Pagamento</span><strong>Pagável em qualquer banco ou via Pix.</strong></div>
+            <div class='celula valor-destaque' style='max-width: 150px;'><span>Vencimento</span><strong>{{ dados.vencimento }}</strong></div>
+        </div>
+        <div class='linha'>
+            <div class='celula'><span>Beneficiário (Emissor)</span><strong>{{ config.nome_empresa }} - {{ config.documento }}</strong></div>
+            <div class='celula' style='max-width: 150px;'><span>Agência / Código</span><strong>0001 / 99999-9</strong></div>
+        </div>
+        <div class='linha'>
+            <div class='celula'><span>Data do Documento</span><strong>{{ data_hoje }}</strong></div>
+            <div class='celula'><span>Número do Documento</span><strong>{{ numero_doc }}</strong></div>
+            <div class='celula'><span>Espécie Doc.</span><strong>RC</strong></div>
+            <div class='celula'><span>Aceite</span><strong>N</strong></div>
+            <div class='celula valor-destaque' style='max-width: 150px;'><span>Valor do Documento</span><strong>R$ {{ "%.2f"|format(dados.valor) }}</strong></div>
+        </div>
+        
+        <div style='display: flex;'>
+            <div style='flex: 1; border-right: 1px solid #000;'>
+                <div class='instrucoes'>
+                    <strong>INSTRUÇÕES:</strong><br><br>
+                    Referente a: {{ dados.servico }}<br><br>
+                    - Após o vencimento cobrar multa de 2% e juros de 1% ao mês.<br>
+                    - Pagamento via Pix usar a chave: {{ config.telefone }}<br>
+                    - Em caso de dúvidas, entre em contato pelo telefone {{ config.telefone }}
+                </div>
+            </div>
+            <div style='width: 150px;'>
+                <div class='celula valor-destaque' style='border-bottom: 1px solid #000; height: 35px;'><span>(-) Desconto</span><strong></strong></div>
+                <div class='celula valor-destaque' style='border-bottom: 1px solid #000; height: 35px;'><span>(+) Multa / Juros</span><strong></strong></div>
+                <div class='celula valor-destaque' style='height: 70px;'><span>(=) Valor Cobrado</span><strong></strong></div>
+            </div>
+        </div>
+
+        <div class='linha' style='border-top: 1px solid #000;'>
+            <div class='celula'>
+                <span>Pagador (Cliente)</span>
+                <strong>{{ dados.cliente_nome }}</strong>
+                <span>{{ dados.cliente_doc }} - {{ dados.cliente_end }}</span>
+            </div>
+        </div>
+
+        <div class='codigo-barras'>
+            <div class='barcode-lines'></div><br>
+            <span style='font-size: 14px; letter-spacing: 2px;'>34191.09008 00000.000004 00000.000000 1 00000000000000</span>
+        </div>
+    </div>
+</body>
+</html>

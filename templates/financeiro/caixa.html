@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-br"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Caixa Diario</title><link rel="stylesheet" href="/static/style.css">
+<style>
+body{margin:0;padding:20px;background:#f4f6f9;font-family:Segoe UI,sans-serif}
+.c{max-width:1000px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;box-shadow:0 4px 15px rgba(0,0,0,.06)}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #eee}
+a.btn,button{display:inline-block;padding:10px 16px;border-radius:8px;border:0;color:#fff;font-weight:600;text-decoration:none;cursor:pointer}
+.g{background:#6c757d}.b{background:#00a8ff}.d{background:#dc3545;padding:6px 10px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:700px){.cards{grid-template-columns:1fr}}
+.card{border:1px solid #e2e8f0;border-radius:10px;padding:16px}
+.t{font-size:.85em;color:#666}.v{font-size:1.35em;font-weight:700;margin-top:6px}
+label{display:block;margin:8px 0 4px;font-weight:600;font-size:.9em}
+input,select{width:100%;padding:10px;border:1px solid #cbd5e0;border-radius:8px;box-sizing:border-box}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;border-bottom:1px solid #eee;text-align:left;font-size:.9em}
+th{background:#f8f9fa}.alert{padding:12px;margin-bottom:12px;border-radius:8px;background:#d1e7dd}
+</style></head><body><div class="c">
+<div class="bar">
+<a class="btn g" href="/painel">Painel</a>
+<h2 style="margin:0">Caixa Diario</h2>
+<a class="btn g" href="/faturamento">Faturamento</a>
+</div>
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}{% for cat,msg in messages %}<div class="alert">{{ msg }}</div>{% endfor %}{% endif %}
+{% endwith %}
+<div class="cards">
+<div class="card"><div class="t">Entradas</div><div class="v" style="color:#2e7d32">R$ {{ '%.2f'|format(total_entradas|default(0)) }}</div></div>
+<div class="card"><div class="t">Saidas</div><div class="v" style="color:#c62828">R$ {{ '%.2f'|format(total_saidas|default(0)) }}</div></div>
+<div class="card"><div class="t">Saldo do Dia</div><div class="v" style="color:#0d47a1">R$ {{ '%.2f'|format(saldo_dia|default(saldo|default(0))) }}</div></div>
+</div>
+<div class="card" style="margin-bottom:16px">
+<h3 style="margin-top:0">Novo Lancamento</h3>
+<form method="POST" action="/caixa">
+<div class="grid">
+<div><label>Data</label><input type="date" name="data" value="{{ data_selecionada|default('') }}"></div>
+<div><label>Tipo</label><select name="tipo"><option value="Entrada">Entrada</option><option value="Saida">Saida</option></select></div>
+<div><label>Categoria</label><input name="categoria" value="Geral"></div>
+<div><label>Descricao</label><input name="descricao" required></div>
+<div><label>Valor</label><input type="number" step="0.01" name="valor" required></div>
+<div><label>Pagamento</label><select name="forma_pagamento"><option>Dinheiro</option><option>PIX</option><option>Cartao</option><option>Transferencia</option></select></div>
+</div>
+<button class="btn b" style="margin-top:12px" type="submit">Salvar</button>
+</form>
+</div>
+<form method="GET" action="/caixa" style="margin-bottom:10px;display:flex;gap:8px;align-items:end;flex-wrap:wrap">
+<div><label>Filtrar data</label><input type="date" name="data" value="{{ data_selecionada|default('') }}"></div>
+<button class="btn g" type="submit">Filtrar</button>
+</form>
+<table>
+<thead><tr><th>Data</th><th>Tipo</th><th>Descricao</th><th>Valor</th><th>Pgto</th><th></th></tr></thead>
+<tbody>
+{% if lancamentos %}
+{% for l in lancamentos %}
+<tr>
+<td>{{ l.data }}</td><td>{{ l.tipo }}</td><td>{{ l.descricao }}</td>
+<td><b>R$ {{ '%.2f'|format(l.valor or 0) }}</b></td><td>{{ l.forma_pagamento or '-' }}</td>
+<td><a class="btn d" href="/caixa/excluir/{{ l.id }}" onclick="return confirm('Excluir?')">Excluir</a></td>
+</tr>
+{% endfor %}
+{% else %}
+<tr><td colspan="6" style="text-align:center;color:#888;padding:28px">Nenhum lancamento neste dia.</td></tr>
+{% endif %}
+</tbody></table>
+</div></body></html>

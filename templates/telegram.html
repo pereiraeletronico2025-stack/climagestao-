@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Telegram Bot - {{ config.nome_empresa or 'ClimaGestão' }}</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.bot-card { background: #152243; border-radius: 12px; padding: 25px; border: 1px solid #223767; color: #fff; margin-bottom: 20px; }
+.bot-card h3 { color: #00A6FF; margin-top: 0; }
+.step-box { background: #0b1329; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #00A6FF; font-size: 0.9rem; line-height: 1.5; }
+.cmd-list { background: #0b1329; border-radius: 8px; padding: 15px; font-family: monospace; color: #10b981; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<div class="hvac-container" style="max-width: 900px;">
+  <header class="hvac-header">
+    <a href="/painel" class="btn-back"> Painel</a>
+    <h2> Configuração do Robô do Telegram</h2>
+  </header>
+
+  <div class="step-box">
+    <strong> Como configurar em 2 passos rápidos:</strong><br>
+    1. No Telegram, procure por <b>@BotFather</b>, envie <code>/newbot</code> e copie o <b>TOKEN</b> gerado.<br>
+    2. Procure por <b>@userinfobot</b> no Telegram, envie <code>/start</code> e copie o seu número de <b>Chat ID</b>.<br>
+    3. Cole os dois códigos abaixo e clique em Salvar!
+  </div>
+
+  <div class="bot-card">
+    <form method="POST">
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label style="color: #94a3b8; font-weight: bold;">API Token do Bot (@BotFather):</label>
+        <input class="input-hvac" type="text" name="bot_token" value="{{ tg.bot_token or '' }}" placeholder="Ex: 123456789:ABCdefGhIJKlmNoPQRstuVWXyz" required>
+      </div>
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label style="color: #94a3b8; font-weight: bold;">Seu ID de Usuário / Chat ID (@userinfobot):</label>
+        <input class="input-hvac" type="text" name="chat_id" value="{{ tg.chat_id or '' }}" placeholder="Ex: 987654321" required>
+      </div>
+
+      <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+        <label><input type="checkbox" name="notificar_agendamentos" {% if tg.notificar_agendamentos %}checked{% endif %}>  Notificar novos agendamentos web</label>
+        <label><input type="checkbox" name="notificar_caixa" {% if tg.notificar_caixa %}checked{% endif %}>  Notificar lançamentos no caixa</label>
+      </div>
+
+      <button type="submit" class="btn-primary-hvac" style="width: auto;"> Salvar Configurações do Bot</button>
+      <a href="/telegram/testar" class="btn-primary-hvac" style="width: auto; background: #25D366; text-decoration: none; margin-left: 10px;"> Enviar Mensagem de Teste</a>
+    </form>
+  </div>
+
+  <div class="bot-card">
+    <h3> Comandos Disponíveis no Telegram:</h3>
+    <div class="cmd-list"><b>Digite so o NUMERO:</b><br>1 Caixa | 2 Agendamentos | 3 Resumo<br>4 Ajuda lancar | 5 Cliente | 6 Menu<br><br>
+      /start ou /menu  Teclado de botões interativos<br>
+      /caixa  Consulta o Saldo do Dia, Entradas e Saídas<br>
+      /agendamentos  Lista os agendamentos do dia / pendentes<br>
+      /resumo  Resumo geral do dia (Clientes, Caixa, OS)<br>
+      /lancar entrada 150 Higienizacao  Lança valor no Caixa<br>
+      /lancar saida 50 Gas R410A  Lança despesa no Caixa<br>
+      /cliente Nome  Busca dados do cliente no sistema
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,65 @@
+﻿<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Espelho de Ponto</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='header'>
+        <h1>📋 Folha e Espelho de Ponto</h1>
+        <div class='header-actions'>
+            <a href='/' class='btn-voltar'>⬅ Painel</a>
+            <a href='/ponto' class='btn'>📸 Bater Ponto</a>
+        </div>
+    </div>
+
+    <div class='container'>
+        <div class='tabela-container'>
+            <h3 style='color: #1e5bb8; margin-bottom: 12px;'>Registros de Ponto e Verificacao Facial</h3>
+            <table>
+                <tr style='background: #f0f4f9;'>
+                    <th>Foto</th>
+                    <th>Funcionario</th>
+                    <th>Data</th>
+                    <th>Entrada</th>
+                    <th>Saida</th>
+                    <th>Total Horas</th>
+                    <th>Horas Extras</th>
+                    <th style='text-align: center;'>Acao</th>
+                </tr>
+                {% for p in registros_ponto %}
+                <tr>
+                    <td>
+                        {% if p[7] %}
+                            <img src='{{ p[7] }}' style='width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #1e5bb8;'>
+                        {% else %}
+                            <span style='font-size: 1.8em;'>👤</span>
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ p[1] }}</strong><br><small style='color: #777;'>{{ p[2] }}</small></td>
+                    <td>{{ p[3] }}</td>
+                    <td style='color: #2e7d32; font-weight: bold;'>{{ p[4] or '--:--' }}</td>
+                    <td style='color: #c62828; font-weight: bold;'>{{ p[5] or '--:--' }}</td>
+                    <td><strong>{{ "%.2f"|format(p[6]) if p[6] else '0.00' }} h</strong></td>
+                    <td style='color: {% if p[8] and p[8] > 0 %}#ff9800{% else %}#888888{% endif %}; font-weight: bold;'>
+                        +{{ "%.2f"|format(p[8]) if p[8] else '0.00' }} h
+                    </td>
+                    <td style='text-align: center;'>
+                        <form method='post' action='/ponto/{{ p[0] }}/excluir' onsubmit="return confirm('Deseja realmente apagar este registro de ponto?');" style='display: inline;'>
+                            <button type='submit' style='background: #d9534f; color: white; padding: 5px 10px; border-radius: 6px; border: none; font-weight: bold; font-size: 0.82em; cursor: pointer;'>
+                                🗑️ Apagar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% if registros_ponto|length == 0 %}
+                <p style='padding: 15px; color: #888;'>Nenhum registro de ponto encontrado.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

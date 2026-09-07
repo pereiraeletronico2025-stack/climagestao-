@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-br"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Faturamento</title><link rel="stylesheet" href="/static/style.css">
+<style>
+body{margin:0;padding:20px;background:#f4f6f9;font-family:Segoe UI,sans-serif}
+.c{max-width:1000px;margin:0 auto;background:#fff;border-radius:12px;padding:24px}
+.bar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #eee}
+a.btn{display:inline-block;padding:10px 16px;border-radius:8px;color:#fff;text-decoration:none;font-weight:600;background:#6c757d}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:700px){.cards{grid-template-columns:1fr}}
+.card{border:1px solid #e2e8f0;border-radius:10px;padding:16px}
+.t{font-size:.85em;color:#666}.v{font-size:1.35em;font-weight:700;margin-top:6px}
+table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid #eee;text-align:left;font-size:.9em}
+th{background:#f8f9fa}
+</style></head><body><div class="c">
+<div class="bar"><a class="btn" href="/painel">Painel</a><h2 style="margin:0">Faturamento {{ mes|default('') }}</h2><a class="btn" href="/caixa">Caixa</a></div>
+<div class="cards">
+<div class="card"><div class="t">Entradas</div><div class="v" style="color:#2e7d32">R$ {{ '%.2f'|format(total_entradas|default(0)) }}</div></div>
+<div class="card"><div class="t">Saidas</div><div class="v" style="color:#c62828">R$ {{ '%.2f'|format(total_saidas|default(0)) }}</div></div>
+<div class="card"><div class="t">Resultado</div><div class="v" style="color:#0d47a1">R$ {{ '%.2f'|format((total_entradas|default(0))-(total_saidas|default(0))) }}</div></div>
+</div>
+<table><thead><tr><th>Data</th><th>Tipo</th><th>Descricao</th><th>Valor</th></tr></thead><tbody>
+{% if lancamentos %}
+{% for l in lancamentos %}
+<tr><td>{{ l.data }}</td><td>{{ l.tipo }}</td><td>{{ l.descricao }}</td><td>R$ {{ '%.2f'|format(l.valor or 0) }}</td></tr>
+{% endfor %}
+{% else %}
+<tr><td colspan="4" style="text-align:center;color:#888;padding:28px">Sem movimentacoes neste mes.</td></tr>
+{% endif %}
+</tbody></table></div></body></html>

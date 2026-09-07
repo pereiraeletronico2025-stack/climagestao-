@@ -1,0 +1,249 @@
+﻿<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Configuracoes do Sistema</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+    <style>
+        .config-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+            border-top: 4px solid #1e5bb8;
+        }
+        .config-section h3 {
+            color: #1e5bb8;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #eef2f7;
+        }
+        .logo-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            border: 3px dashed #ccd5e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+        .logo-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .color-picker-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .color-picker-row input[type='color'] {
+            width: 60px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 0;
+        }
+        .template-btn {
+            background: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #90caf9;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin: 3px;
+            display: inline-block;
+        }
+        .template-btn:hover {
+            background: #bbdefb;
+        }
+        .foto-msg-preview {
+            width: 200px;
+            height: 150px;
+            border-radius: 10px;
+            border: 2px dashed #ccd5e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+        .foto-msg-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <div class='header'>
+        <h1>⚙️ Configuracoes do Sistema</h1>
+        <a href='/' class='btn-voltar'>⬅ Painel</a>
+    </div>
+
+    <div class='container'>
+        <form method='post' enctype='multipart/form-data'>
+
+            <!-- DADOS DA EMPRESA -->
+            <div class='config-section'>
+                <h3>🏢 Dados da Empresa / Prestador de Servico</h3>
+                <label>Nome da Empresa / Marca:</label>
+                <input type='text' name='nome_empresa' value='{{ config.nome_empresa or "" }}' placeholder='Ex: ClimaFrio Servicos' required>
+
+                <label>Slogan / Descricao Curta:</label>
+                <input type='text' name='slogan' value='{{ config.slogan or "" }}' placeholder='Ex: Especialistas em Ar-Condicionado'>
+
+                <label>CNPJ ou CPF:</label>
+                <input type='text' name='documento' value='{{ config.documento or "" }}' placeholder='Ex: 12.345.678/0001-90'>
+
+                <label>Telefone / WhatsApp Comercial (REMETENTE das mensagens):</label>
+                <input type='text' name='telefone' value='{{ config.telefone or "" }}' placeholder='Ex: 11999998888 (com DDD)' required>
+
+                <label>Email Comercial:</label>
+                <input type='email' name='email' value='{{ config.email or "" }}'>
+
+                <label>Endereco Completo:</label>
+                <input type='text' name='endereco' value='{{ config.endereco or "" }}'>
+
+                <label>Site / Instagram:</label>
+                <input type='text' name='site' value='{{ config.site or "" }}'>
+            </div>
+
+            <!-- CONFIGURACAO FISCAL & IMPOSTOS (MEI) -->
+            <div class='config-section' style='border-top-color: #20c997;'>
+                <h3>💰 Configuracao Tributaria / Impostos (MEI & Simples)</h3>
+                <p style='color: #555; font-size: 0.88em; margin-bottom: 12px;'>
+                    Defina aqui o valor padrão mensal da guia do DAS-MEI para cálculo automático e alertas.
+                </p>
+
+                <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 15px;'>
+                    <div>
+                        <label>Valor Mensal Padrao do DAS - MEI (R$):</label>
+                        <input type='number' step='0.01' name='valor_mei_padrao' value='{{ config.valor_mei_padrao or 75.90 }}' placeholder='Ex: 75.90' required>
+                        <p style='color: #888; font-size: 0.8em; margin-top: 4px;'>Altere sempre que o valor da guia MEI for reajustado anualmente.</p>
+                    </div>
+                    <div>
+                        <label>Aliquota Estimada Simples Nacional (%):</label>
+                        <input type='number' step='0.1' name='aliquota_simples_padrao' value='{{ config.aliquota_simples_padrao or 6.0 }}' placeholder='Ex: 6.0'>
+                        <p style='color: #888; font-size: 0.8em; margin-top: 4px;'>Porcentagem padrão sobre os serviços (Anexo III).</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOGO DA EMPRESA -->
+            <div class='config-section'>
+                <h3>🖼️ Logo da Empresa</h3>
+                <div class='logo-preview' id='logo_preview'>
+                    {% if config.logo %}
+                        <img src='{{ config.logo }}' alt='Logo'>
+                    {% else %}
+                        <span style='color: #aaa; font-size: 0.85em; text-align: center;'>Sem logo</span>
+                    {% endif %}
+                </div>
+                <label>Upload da Logo (PNG, JPG):</label>
+                <input type='file' name='logo_file' accept='image/*' onchange='previewImg(this, "logo_preview")'>
+            </div>
+
+            <!-- MENSAGEM PERSONALIZADA DE MANUTENCAO -->
+            <div class='config-section' style='border-top-color: #ff9800;'>
+                <h3>💬 Mensagem Personalizada de Alerta de Manutencao</h3>
+                <p style='color: #555; font-size: 0.88em; margin-bottom: 10px;'>
+                    Esta e a mensagem enviada pelo seu WhatsApp nos Alertas de Retorno.
+                </p>
+
+                <div style='margin-bottom: 12px;'>
+                    <strong style='font-size: 0.9em; color: #1e5bb8;'>📋 Modelos Prontos:</strong><br>
+                    <button type='button' class='template-btn' onclick='usarTemplate(1)'>🩺 Foco em Saude</button>
+                    <button type='button' class='template-btn' onclick='usarTemplate(2)'>💰 Foco em Economia</button>
+                    <button type='button' class='template-btn' onclick='usarTemplate(3)'>⚡ Foco em Urgencia</button>
+                    <button type='button' class='template-btn' onclick='usarTemplate(4)'>🤝 Foco em Fidelidade</button>
+                </div>
+
+                <textarea name='mensagem_manutencao' id='msg_manutencao' rows='8' style='font-size: 0.95em; line-height: 1.5;'>{{ config.mensagem_manutencao or "Ola {nome_cliente}, tudo bem? Aqui e da equipe {nome_empresa}! Identificamos que ja faz tempo desde a ultima higienizacao do seu ar-condicionado. Filtros sujos acumulam fungos, bacterias e acaros que prejudicam a saude da sua familia. Alem disso, o aparelho sujo pode aumentar sua conta de luz em ate 30%. Gostariamos de agendar uma revisao preventiva com aplicacao de bactericida. Podemos verificar o melhor horario para voce? Aguardamos seu retorno!" }}</textarea>
+
+                <p style='color: #888; font-size: 0.8em; margin-top: 5px;'>
+                    💡 Use <strong>{nome_cliente}</strong> para o nome do cliente e <strong>{nome_empresa}</strong> para o nome da sua empresa.
+                </p>
+            </div>
+
+            <!-- FOTO PARA ENVIAR JUNTO COM A MENSAGEM -->
+            <div class='config-section' style='border-top-color: #9c27b0;'>
+                <h3>📸 Foto para Enviar com o Alerta (Opcional)</h3>
+                <div class='foto-msg-preview' id='foto_msg_preview'>
+                    {% if config.foto_alerta %}
+                        <img src='{{ config.foto_alerta }}' alt='Foto Alerta'>
+                    {% else %}
+                        <span style='color: #aaa; font-size: 0.85em; text-align: center;'>Sem foto</span>
+                    {% endif %}
+                </div>
+                <label>Upload da Foto de Alerta:</label>
+                <input type='file' name='foto_alerta_file' accept='image/*' onchange='previewImg(this, "foto_msg_preview")'>
+            </div>
+
+            <!-- MENSAGEM DO RECIBO -->
+            <div class='config-section'>
+                <h3>🧾 Mensagem Padrao do Recibo / OS</h3>
+                <textarea name='mensagem_recibo' rows='3'>{{ config.mensagem_recibo or "Garantia de 90 dias sobre a mao de obra do servico executado. Agradecemos a preferencia!" }}</textarea>
+            </div>
+
+            <!-- PERSONALIZACAO VISUAL -->
+            <div class='config-section'>
+                <h3>🎨 Personalizacao Visual</h3>
+                <div class='color-picker-row'>
+                    <div>
+                        <label>Cor Principal:</label>
+                        <input type='color' name='cor_principal' value='{{ config.cor_principal or "#1e5bb8" }}'>
+                    </div>
+                    <div>
+                        <label>Cor Secundaria:</label>
+                        <input type='color' name='cor_secundaria' value='{{ config.cor_secundaria or "#4f8cff" }}'>
+                    </div>
+                    <div>
+                        <label>Cor Destaque:</label>
+                        <input type='color' name='cor_destaque' value='{{ config.cor_destaque or "#28a745" }}'>
+                    </div>
+                </div>
+            </div>
+
+            <button class='btn-salvar' type='submit' style='max-width: 700px; margin: 0 auto; display: block;'>
+                💾 Salvar Todas as Configuracoes
+            </button>
+        </form>
+    </div>
+
+    <script>
+        function previewImg(input, previewId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById(previewId).innerHTML = '<img src="' + e.target.result + '">';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function usarTemplate(num) {
+            const templates = {
+                1: "Ola {nome_cliente}, tudo bem? Aqui e da {nome_empresa}!\\n\\n🩺 *ALERTA DE SAUDE*\\n\\nIdentificamos que seu ar-condicionado esta na hora da higienizacao preventiva.\\n\\n⚠️ *Voce sabia?*\\n• Filtros sujos acumulam *fungos, bacterias e acaros*\\n• Causam rinite, sinusite, alergias e problemas respiratorios\\n• Criancas e idosos sao os mais afetados\\n\\nNao coloque a saude da sua familia em risco! Vamos agendar uma higienizacao completa com aplicacao de bactericida?\\n\\nAguardamos seu retorno! 😊",
+
+                2: "Ola {nome_cliente}, tudo bem? Aqui e da {nome_empresa}!\\n\\n💰 *ECONOMIZE NA CONTA DE LUZ*\\n\\nSabia que um ar-condicionado sujo pode *aumentar sua conta de energia em ate 30%*?\\n\\nO filtro entupido forca o compressor a trabalhar mais, gastando muito mais eletricidade.\\n\\nCom uma simples higienizacao preventiva, voce:\\n✅ Reduz a conta de luz\\n✅ Prolonga a vida util do aparelho\\n✅ Evita reparos caros no futuro\\n\\nVamos agendar? O investimento se paga ja no primeiro mes! 💡",
+
+                3: "Ola {nome_cliente}! Aqui e da {nome_empresa}.\\n\\n⚡ *ATENCAO URGENTE*\\n\\nSeu ar-condicionado esta ha mais de 6 meses sem manutencao.\\n\\nSem higienizacao regular, o aparelho pode:\\n❌ Pingar agua na parede\\n❌ Liberar mau cheiro de mofo\\n❌ Parar de gelar no verao\\n❌ Queimar o compressor\\n\\nEvite dor de cabeca! Vamos agendar sua revisao preventiva esta semana?\\n\\nResponda SIM que ja reservamos seu horario! 🗓️",
+
+                4: "Ola {nome_cliente}, como voce esta? Aqui e da {nome_empresa}! 😊\\n\\n🤝 *CLIENTE ESPECIAL*\\n\\nJa faz um tempinho desde a ultima visita, entao estamos passando para lembrar da higienizacao preventiva.\\n\\n🎁 *Condicao especial:* Agendando esta semana, voce ganha *10% de desconto* na higienizacao completa!\\n\\nPodemos confirmar um horario? Sera rapido e sem bagunca!\\n\\nAbraços da equipe {nome_empresa}! ❄️"
+            };
+            document.getElementById('msg_manutencao').value = templates[num];
+        }
+    </script>
+</body>
+</html>

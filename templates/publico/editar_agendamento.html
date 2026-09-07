@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Editar OS / Agendamento - {{ config.nome_empresa }}</title>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='hvac-container'>
+        <header class='hvac-header'>
+            <a href='/agendamentos-online' class='btn-back'> Voltar</a>
+            <h2> Editar Agendamento / OS #{{ a[0] }}</h2>
+        </header>
+
+        <div class='card-tech'>
+            <form method='POST'>
+                <div class='form-grid'>
+                    <div class='form-group'>
+                        <label>Cliente:</label>
+                        <input type='text' class='input-hvac' value='{{ a[1] }}' readonly style='background:#f1f5f9;'>
+                    </div>
+                    <div class='form-group'>
+                        <label>WhatsApp:</label>
+                        <input type='text' class='input-hvac' value='{{ a[2] }}' readonly style='background:#f1f5f9;'>
+                    </div>
+                    <div class='form-group'>
+                        <label>CPF / CNPJ do Cliente:</label>
+                        <input type='text' name='documento' class='input-hvac' value='{{ a[20] if a|length > 20 else "" }}' placeholder='Ex: 123.456.789-00 ou 12.345.678/0001-99'>
+                    </div>
+
+                    <div class='form-group' style='grid-column: span 2;'>
+                        <label>Serviço / Descrição:</label>
+                        <input type='text' name='tipo_servico' class='input-hvac' value='{{ a[5] }}' required>
+                    </div>
+                    <div class='form-group'>
+                        <label>Equipamento:</label>
+                        <input type='text' name='tipo_aparelho' class='input-hvac' value='{{ a[6] or "" }}'>
+                    </div>
+                    <div class='form-group'>
+                        <label>Data do Serviço:</label>
+                        <input type='text' class='input-hvac' value='{{ a[7] }}  {{ a[8] }}' readonly style='background:#f1f5f9;'>
+                    </div>
+
+                    <div class='form-group'>
+                        <label>Valor do Serviço (R$):</label>
+                        <input type='number' step='0.01' name='valor' class='input-hvac' value='{{ a[11] or 0 }}' required>
+                    </div>
+                    <div class='form-group'>
+                        <label>Forma de Pagamento:</label>
+                        <select name='forma_pagamento' class='input-hvac'>
+                            <option value='Pix' {% if a[12]=='Pix' %}selected{% endif %}>Pix</option>
+                            <option value='Dinheiro' {% if a[12]=='Dinheiro' %}selected{% endif %}>Dinheiro</option>
+                            <option value='Cartão de Crédito' {% if a[12]=='Cartão de Crédito' %}selected{% endif %}>Cartão de Crédito</option>
+                            <option value='Cartão de Débito' {% if a[12]=='Cartão de Débito' %}selected{% endif %}>Cartão de Débito</option>
+                            <option value='Boleto Bancário' {% if a[12]=='Boleto Bancário' %}selected{% endif %}>Boleto Bancário</option>
+                        </select>
+                    </div>
+
+                    <div class='form-group'>
+                        <label>Status do Serviço:</label>
+                        <select name='status_servico' class='input-hvac'>
+                            <option value='Pendente' {% if a[14]=='Pendente' %}selected{% endif %}> Pendente</option>
+                            <option value='Confirmado' {% if a[14]=='Confirmado' %}selected{% endif %}> Confirmado</option>
+                            <option value='Realizado' {% if a[14]=='Realizado' %}selected{% endif %}> Serviço Realizado</option>
+                        </select>
+                    </div>
+                    <div class='form-group' style='background:#e0f2fe; padding:10px; border-radius:8px; border:1px solid #00A6FF;'>
+                        <label style='color:#0369a1;'>Status do Pagamento:</label>
+                        <select name='status_pagamento' class='input-hvac' style='font-weight:bold;'>
+                            <option value='Pendente' {% if a[13]=='Pendente' %}selected{% endif %}> Pendente (A Receber)</option>
+                            <option value='Pago' {% if a[13]=='Pago' %}selected{% endif %}> Pago (Envia p/ Caixa)</option>
+                        </select>
+                        <small style='display:block; margin-top:4px; color:#0369a1; font-size:0.75rem;'>Ao marcar Pago, o valor entra no Caixa do dia automaticamente.</small>
+                    </div>
+
+                    <div class='form-group'>
+                        <label>Vencimento do Pagamento:</label>
+                        <input type='date' name='vencimento' class='input-hvac' value='{{ a[15] or "" }}'>
+                    </div>
+                    <div class='form-group'>
+                        <label>Funcionário que realizou:</label>
+                        <select name='funcionario_id' class='input-hvac'>
+                            <option value=''> Nenhum </option>
+                            {% for f in funcionarios %}
+                            <option value='{{ f[0] }}' {% if a[16] and a[16]|string == f[0]|string %}selected{% endif %}>{{ f[1] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class='form-group' style='grid-column: span 2;'>
+                        <label>Observação interna:</label>
+                        <textarea name='observacao_interna' class='input-hvac' rows='2'>{{ a[17] or "" }}</textarea>
+                    </div>
+                </div>
+                <button type='submit' class='btn-primary-hvac' style='margin-top:15px;'> Salvar OS / Agendamento</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

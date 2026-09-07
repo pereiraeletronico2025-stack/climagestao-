@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Faturamento & Notas - ClimaGestao</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+    <style>
+        .copy-btn { background: #00A6FF; color: #fff; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: bold; }
+        .copy-btn:hover { background: #0088cc; }
+        .data-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 10px 0; gap: 10px; }
+        .data-row input { flex: 1; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class='hvac-container'>
+        <header class='hvac-header'>
+            <a href='/' class='btn-back'> Painel</a>
+            <h2> Central de Faturamento & Notas</h2>
+        </header>
+
+        <div class='card-tech' style='margin-bottom: 20px; background: #0b1329;'>
+            <div class='form-group'>
+                <label style='color: #00A6FF; font-size: 1rem;'>1. Selecione o Cliente:</label>
+                <select id='select-cliente' class='input-hvac' onchange='carregarDadosCliente()' style='font-size: 1.05rem; font-weight: bold;'>
+                    <option value=''>-- Clique aqui para escolher o cliente --</option>
+                </select>
+            </div>
+            <p style='color:#94a3b8; font-size:0.8rem; margin:8px 0 0 0;'>Se o CPF/CNPJ nao vier preenchido, digite no campo abaixo e use Copiar / Boleto normalmente.</p>
+        </div>
+
+        <div class='form-grid'>
+            <div class='card-tech' style='border-top: 4px solid #10b981;'>
+                <h3 style='color: #10b981; margin-top:0;'> Auxiliar de Emissão NFS-e</h3>
+                <p style='font-size: 0.85rem; color: #64748b;'>Copie e cole no portal da Prefeitura. Voce pode editar os campos antes de copiar.</p>
+                
+                <div class='data-row'>
+                    <div style='flex:1;'>
+                        <small style='color: #64748b;'>Razão Social / Nome:</small><br>
+                        <input type='text' id='lbl-nome' value='' placeholder='Nome do cliente'>
+                    </div>
+                    <button type='button' class='copy-btn' onclick='copiarInput("lbl-nome")'> Copiar</button>
+                </div>
+                <div class='data-row'>
+                    <div style='flex:1;'>
+                        <small style='color: #64748b;'>CPF / CNPJ:</small><br>
+                        <input type='text' id='lbl-doc' value='' placeholder='Digite o CPF ou CNPJ'>
+                    </div>
+                    <button type='button' class='copy-btn' onclick='copiarInput("lbl-doc")'> Copiar</button>
+                </div>
+                <div class='data-row'>
+                    <div style='flex:1;'>
+                        <small style='color: #64748b;'>Endereço Completo:</small><br>
+                        <input type='text' id='lbl-end' value='' placeholder='Endereço'>
+                    </div>
+                    <button type='button' class='copy-btn' onclick='copiarInput("lbl-end")'> Copiar</button>
+                </div>
+                <div class='data-row'>
+                    <div style='flex:1;'>
+                        <small style='color: #64748b;'>Forma de Pagamento:</small><br>
+                        <input type='text' id='lbl-pag' value='' placeholder='Pix / Cartão / etc'>
+                    </div>
+                </div>
+                <div style='margin-top: 15px;'>
+                    <a href='https://www.nfse.gov.br/EmissorNacional/' target='_blank' class='btn-primary-hvac' style='background: #10b981; width: 100%; box-sizing:border-box; display:block; text-align:center;'> Abrir Emissor Nacional NFS-e</a>
+                </div>
+            </div>
+
+            <div class='card-tech' style='border-top: 4px solid #3b82f6;'>
+                <h3 style='color: #3b82f6; margin-top:0;'> Gerador de Boleto / Cobrança</h3>
+                <form action='/gerar-boleto' method='POST' target='_blank' onsubmit='syncBoleto()'>
+                    <input type='hidden' name='cliente_nome' id='bol-nome'>
+                    <input type='hidden' name='cliente_doc' id='bol-doc'>
+                    <input type='hidden' name='cliente_end' id='bol-end'>
+
+                    <div class='form-group'>
+                        <label>Referente ao Serviço:</label>
+                        <input type='text' name='servico' class='input-hvac' placeholder='Ex: Instalação Ar Split 12.000 BTU' required>
+                    </div>
+                    <div class='form-group'>
+                        <label>Valor Total (R$):</label>
+                        <input type='number' step='0.01' name='valor' class='input-hvac' placeholder='Ex: 300.00' required>
+                    </div>
+                    <div class='form-group'>
+                        <label>Data de Vencimento:</label>
+                        <input type='date' name='vencimento' id='dt-venc' class='input-hvac' required>
+                    </div>
+                    <button type='submit' class='btn-primary-hvac' style='background: #3b82f6; margin-top: 10px; width: 100%; box-sizing:border-box;'> Gerar Boleto Impresso</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var listaClientes = __LISTA_CLIENTES_JSON__;
+
+        (function() {
+            var sel = document.getElementById('select-cliente');
+            for (var i = 0; i < listaClientes.length; i++) {
+                var opt = document.createElement('option');
+                opt.value = String(i);
+                var tel = listaClientes[i].tel ? ' (' + listaClientes[i].tel + ')' : '';
+                var docHint = (listaClientes[i].doc && listaClientes[i].doc.indexOf('Não') === -1) ? ' CPF' : '';
+                opt.textContent = ' ' + listaClientes[i].nome + tel + docHint;
+                sel.appendChild(opt);
+            }
+            var d = new Date();
+            d.setDate(d.getDate() + 5);
+            document.getElementById('dt-venc').value = d.toISOString().split('T')[0];
+        })();
+
+        function carregarDadosCliente() {
+            var idx = document.getElementById('select-cliente').value;
+            if (idx === '') {
+                document.getElementById('lbl-nome').value = '';
+                document.getElementById('lbl-doc').value = '';
+                document.getElementById('lbl-end').value = '';
+                document.getElementById('lbl-pag').value = '';
+                return;
+            }
+            var c = listaClientes[parseInt(idx, 10)] || {};
+            document.getElementById('lbl-nome').value = c.nome || '';
+            // Se for "Não informado" ou "Cadastro Web", deixa o campo vazio para digitar
+            var doc = c.doc || '';
+            if (doc.indexOf('Não') >= 0 || doc.indexOf('Cadastro Web') >= 0 || doc.indexOf('informado') >= 0) {
+                doc = '';
+            }
+            document.getElementById('lbl-doc').value = doc;
+            document.getElementById('lbl-end').value = c.end || '';
+            document.getElementById('lbl-pag').value = c.pag || 'Pix';
+            if (!doc) {
+                document.getElementById('lbl-doc').focus();
+                document.getElementById('lbl-doc').placeholder = 'Digite o CPF/CNPJ do ' + (c.nome || 'cliente');
+            }
+        }
+
+        function copiarInput(id) {
+            var el = document.getElementById(id);
+            var texto = el.value || '';
+            if (!texto) { alert('Campo vazio. Preencha antes de copiar.'); return; }
+            navigator.clipboard.writeText(texto);
+            alert('Copiado: ' + texto);
+        }
+
+        function syncBoleto() {
+            document.getElementById('bol-nome').value = document.getElementById('lbl-nome').value;
+            document.getElementById('bol-doc').value = document.getElementById('lbl-doc').value;
+            document.getElementById('bol-end').value = document.getElementById('lbl-end').value;
+        }
+    </script>
+</body>
+</html>

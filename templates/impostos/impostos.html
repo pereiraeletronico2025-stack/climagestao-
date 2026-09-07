@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de Impostos</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.sim-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.sim-card{background:#fff;border-radius:10px;padding:14px;border-left:5px solid #00A6FF;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.sim-card.green{border-color:#10b981}.sim-card.red{border-color:#ef4444}
+.sim-card.blue{border-color:#3b82f6}.sim-card.orange{border-color:#f59e0b}
+.sim-card small{color:#64748b;font-size:.72rem;font-weight:700;text-transform:uppercase}
+.sim-card h2{margin:6px 0 0;font-size:1.35rem}
+.trib{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #e2e8f0}
+.trib input[type=number]{width:88px;padding:6px;border:1px solid #cbd5e1;border-radius:6px}
+.badge-v{background:#e0f2fe;color:#0369a1;padding:4px 10px;border-radius:6px;font-weight:700;font-size:.85rem;min-width:100px;text-align:center}
+</style>
+</head>
+<body>
+<div class="hvac-container" style="max-width:1100px;">
+  <header class="hvac-header">
+    <a href="/painel" class="btn-back"> Painel</a>
+    <h2> Simulador & Lançamento de Impostos</h2>
+  </header>
+
+  <div class="card-tech" style="margin-bottom:14px;">
+    <form method="GET" style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;">
+      <div class="form-group">
+        <label>Mês (base do Caixa):</label>
+        <input type="month" name="mes" class="input-hvac" value="{{ mes }}">
+      </div>
+      <button class="btn-primary-hvac" style="width:auto;" type="submit"> Carregar Faturamento</button>
+    </form>
+  </div>
+
+  <div class="card-tech" style="margin-bottom:16px;">
+    <h3 style="margin-top:0;color:#00A6FF;">1) Base de Cálculo e Regime</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Faturamento para Simulação (R$):</label>
+        <input type="number" step="0.01" id="fat" class="input-hvac" value="{{ fat_num }}" oninput="calc()">
+      </div>
+      <div class="form-group">
+        <label>Escolha o Regime Tributário:</label>
+        <select id="regime" class="input-hvac" onchange="setRegime()">
+          <option value="mei">MEI (valor fixo)</option>
+          <option value="simples6" selected>Simples Nacional ~6% (serviços)</option>
+          <option value="simples4">Simples ~4,5% + ISS 2%</option>
+          <option value="simples15">Simples Anexo V ~15,5%</option>
+          <option value="presumido">Lucro Presumido (pacote)</option>
+          <option value="custom">Personalizado (você marca)</option>
+        </select>
+      </div>
+    </div>
+
+    <h3 style="color:#00A6FF;">2) Tributos (Ligue e Altere a %):</h3>
+    <div id="box"></div>
+
+    <div class="sim-grid">
+      <div class="sim-card green"><small>Faturamento</small><h2 id="o1">R$ 0,00</h2></div>
+      <div class="sim-card orange"><small>Carga Média</small><h2 id="o2">0%</h2></div>
+      <div class="sim-card red"><small>Total Impostos</small><h2 id="o3">R$ 0,00</h2></div>
+      <div class="sim-card blue"><small>Líquido</small><h2 id="o4">R$ 0,00</h2></div>
+    </div>
+
+    <button type="button" class="btn-primary-hvac" style="width:auto;margin-top:8px;" onclick="preencherGuia()">Usar total no formulário abaixo</button>
+  </div>
+
+  <div class="card-tech" style="margin-bottom:16px;">
+    <h3 style="margin-top:0; color:#00A6FF;">3) Salvar Guia no Mês: {{ mes }}</h3>
+    <form method="POST" class="form-grid">
+      <input type="hidden" name="acao" value="add">
+      <input type="hidden" name="mes" value="{{ mes }}">
+      <div class="form-group" style="grid-column:span 2;">
+        <label>Descrição:</label>
+        <input class="input-hvac" name="descricao" id="d" required placeholder="Ex: DAS Simples Nacional Mês {{ mes }}">
+      </div>
+      <div class="form-group">
+        <label>Valor (R$):</label>
+        <input class="input-hvac" type="number" step="0.01" name="valor" id="v" value="0" required>
+      </div>
+      <div class="form-group">
+        <label>Vencimento:</label>
+        <input class="input-hvac" type="date" name="venc">
+      </div>
+      <div class="form-group">
+        <label>Tipo:</label>
+        <select class="input-hvac" name="tipo" id="t">
+          <option>Simples</option>
+          <option>MEI</option>
+          <option>ISS</option>
+          <option>PIS/COFINS</option>
+          <option>IRPJ/CSLL</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status:</label>
+        <select class="input-hvac" name="status">
+          <option>Pendente</option>
+          <option>Pago</option>
+        </select>
+      </div>
+      <button class="btn-primary-hvac" style="width:auto; grid-column:span 2; margin-top:10px;" type="submit"> Salvar Lançamento</button>
+    </form>
+  </div>
+
+  <div class="card-tech">
+    <h3 style="margin-top:0;"> Lançamentos do Mês {{ mes }}  <span style="color:#ef4444;">Pendente: R$ {{ pend_txt }}</span> | <span style="color:#10b981;">Pago: R$ {{ pago_txt }}</span></h3>
+    <table class="tech-table">
+      <thead>
+        <tr>
+          <th>Descrição</th>
+          <th>Tipo</th>
+          <th>Valor</th>
+          <th>Vencimento</th>
+          <th>Status</th>
+          <th style="text-align:center;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for i in impostos %}
+        <tr>
+          <td><strong>{{ i.descricao }}</strong></td>
+          <td>{{ i.tipo }}</td>
+          <td><strong style="color:#10b981;">R$ {{ i.valor_txt }}</strong></td>
+          <td>{{ i.vencimento }}</td>
+          <td>
+            {% if i.status == 'Pago' %}
+              <span class="status-badge badge-success"> Pago</span>
+            {% else %}
+              <span class="status-badge badge-danger"> Pendente</span>
+            {% endif %}
+          </td>
+          <td style="text-align:center;">
+            <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
+              {% if i.status != 'Pago' %}
+              <form method="POST" style="display:inline">
+                <input type="hidden" name="acao" value="pagar">
+                <input type="hidden" name="id" value="{{ i.id }}">
+                <input type="hidden" name="mes" value="{{ mes }}">
+                <button class="status-badge badge-success" style="border:0;cursor:pointer;padding:6px 10px;" type="submit"> Pagar</button>
+              </form>
+              {% endif %}
+              <a href="/impostos/editar/{{ i.id }}" class="status-badge badge-info" style="text-decoration:none; padding:6px 10px;"> Editar</a>
+              <a href="/impostos/excluir/{{ i.id }}?mes={{ mes }}" class="status-badge badge-danger" style="text-decoration:none; padding:6px 10px;" onclick="return confirm('Deseja realmente excluir este imposto?')"> Excluir</a>
+            </div>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" style="text-align:center;color:#888;padding:25px;">Nenhum imposto registrado neste mês.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+var MEI = {{ mei_num }};
+var T = [
+  {id:'mei', n:'MEI (fixo mensal)', p:0, f:MEI, tipo:'MEI', on:0},
+  {id:'das', n:'DAS Simples Nacional', p:6, f:0, tipo:'Simples', on:1},
+  {id:'iss', n:'ISS', p:2, f:0, tipo:'ISS', on:0},
+  {id:'pis', n:'PIS', p:0.65, f:0, tipo:'PIS/COFINS', on:0},
+  {id:'cofins', n:'COFINS', p:3, f:0, tipo:'PIS/COFINS', on:0},
+  {id:'irpj', n:'IRPJ (presumido approx)', p:4.8, f:0, tipo:'IRPJ/CSLL', on:0},
+  {id:'csll', n:'CSLL (presumido approx)', p:2.88, f:0, tipo:'IRPJ/CSLL', on:0},
+  {id:'out', n:'Outro / extra', p:0, f:0, tipo:'Outro', on:0}
+];
+function m(n){n=+n||0;return n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function draw(){
+  var h='';
+  T.forEach(function(t,i){
+    h+='<div class="trib"><input type="checkbox" '+(t.on?'checked':'')+' onchange="T['+i+'].on=this.checked?1:0;calc()">'+
+      '<div style="flex:1;min-width:180px"><b>'+t.n+'</b><br><small style="color:#64748b">'+t.tipo+'</small></div>'+
+      '<span>% <input type="number" step="0.01" value="'+t.p+'" onchange="T['+i+'].p=parseFloat(this.value)||0;calc()"></span>'+
+      '<span>Fixo <input type="number" step="0.01" value="'+t.f+'" onchange="T['+i+'].f=parseFloat(this.value)||0;calc()"></span>'+
+      '<span class="badge-v" id="r'+t.id+'">R$ 0,00</span></div>';
+  });
+  document.getElementById('box').innerHTML=h; calc();
+}
+function setRegime(){
+  var r=document.getElementById('regime').value;
+  T.forEach(function(t){t.on=0});
+  function on(id,p){var t=T.find(function(x){return x.id===id}); if(!t)return; t.on=1; if(p!=null)t.p=p;}
+  if(r==='mei') on('mei');
+  if(r==='simples6') on('das',6);
+  if(r==='simples4'){ on('das',4.5); on('iss',2); }
+  if(r==='simples15') on('das',15.5);
+  if(r==='presumido'){ on('iss',3); on('pis'); on('cofins'); on('irpj'); on('csll'); }
+  draw();
+}
+function calc(){
+  var fat=parseFloat(document.getElementById('fat').value)||0, tot=0;
+  T.forEach(function(t){
+    var v=t.on? (fat*(t.p/100)+(t.f||0)) : 0; tot+=v;
+    var el=document.getElementById('r'+t.id); if(el) el.innerText='R$ '+m(v);
+  });
+  var liq=fat-tot, pc=fat>0?(tot/fat*100):0;
+  document.getElementById('o1').innerText='R$ '+m(fat);
+  document.getElementById('o2').innerText=m(pc)+'%';
+  document.getElementById('o3').innerText='R$ '+m(tot);
+  document.getElementById('o4').innerText='R$ '+m(liq);
+  window._tot=tot;
+}
+function preencherGuia(){
+  calc();
+  var reg=document.getElementById('regime').selectedOptions[0].text;
+  document.getElementById('d').value='Simulação - '+reg;
+  document.getElementById('v').value=(window._tot||0).toFixed(2);
+  alert('Valor R$ '+m(window._tot||0)+' preenchido. Clique em "Salvar lançamento".');
+  document.getElementById('v').scrollIntoView({behavior:'smooth'});
+}
+window.onload=function(){ setRegime(); };
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>ClimaGestão - Sistema Completo para Técnicos de Refrigeração</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #0b1329; color: #fff; }
+        .hero { background: linear-gradient(135deg, #0b1329, #152243, #00A6FF); padding: 60px 20px; text-align: center; min-height: 90vh; display: flex; flex-direction: column; justify-content: center; }
+        .hero h1 { font-size: 3rem; margin-bottom: 15px; font-weight: 900; }
+        .hero h1 span { color: #00e5ff; }
+        .hero .subtitle { font-size: 1.3rem; opacity: 0.9; margin-bottom: 30px; }
+        .price-box { background: rgba(0,0,0,0.4); padding: 30px; border-radius: 15px; border: 2px solid #00A6FF; max-width: 400px; margin: 0 auto 25px; }
+        .price { font-size: 3.5rem; font-weight: bold; color: #10b981; }
+        .price small { font-size: 1rem; opacity: 0.7; }
+        .btn-cta { display: inline-block; padding: 18px 40px; background: #10b981; color: #fff; text-decoration: none; border-radius: 8px; font-size: 1.2rem; font-weight: bold; margin: 10px; transition: 0.3s; }
+        .btn-cta:hover { background: #059669; transform: translateY(-2px); }
+        .btn-login { background: transparent; border: 2px solid #fff; }
+        .features { padding: 60px 20px; background: #fff; color: #0f172a; }
+        .features h2 { text-align: center; font-size: 2rem; margin-bottom: 40px; }
+        .grid-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; max-width: 1100px; margin: 0 auto; }
+        .feature-card { padding: 25px; background: #f8fafc; border-radius: 12px; border-left: 4px solid #00A6FF; }
+        .feature-card h3 { color: #00A6FF; margin-bottom: 8px; }
+        .feature-card p { color: #64748b; font-size: 0.95rem; }
+        .footer { text-align: center; padding: 25px; background: #0b1329; opacity: 0.8; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <section class='hero'>
+        <h1> Clima<span>Gestão</span></h1>
+        <p class='subtitle'>O sistema profissional para técnicos e empresas de refrigeração e climatização</p>
+        
+        <div class='price-box'>
+            <p style='opacity: 0.9;'>Assinatura Mensal</p>
+            <div class='price'>R$ 59,90<small>/mês</small></div>
+            <p style='color: #94a3b8; margin-top: 10px;'>Acesso completo a todas as funções</p>
+        </div>
+
+        <div>
+            <a href='/cadastro' class='btn-cta'> Começar Agora</a>
+            <a href='/login' class='btn-cta btn-login'> Já Sou Assinante</a>
+        </div>
+    </section>
+
+    <section class='features'>
+        <h2> Tudo que Você Precisa em Um Só Lugar</h2>
+        <div class='grid-features'>
+            <div class='feature-card'><h3> Agendamento Online</h3><p>Link personalizado para clientes agendarem visitas diretamente no seu WhatsApp.</p></div>
+            <div class='feature-card'><h3> Ordens de Serviço</h3><p>Controle total: pendente, confirmado, realizado, pago. Integração com caixa.</p></div>
+            <div class='feature-card'><h3> Financeiro Completo</h3><p>Caixa diário, faturamento com gráficos e relatórios por período.</p></div>
+            <div class='feature-card'><h3> Notas Fiscais</h3><p>Auxiliar automático de emissão NFS-e + gerador de boletos.</p></div>
+            <div class='feature-card'><h3> Central HVAC</h3><p>Calculadora de superaquecimento, BTUs e códigos de erro por marca.</p></div>
+            <div class='feature-card'><h3> Checklists Personalizados</h3><p>Crie procedimentos técnicos próprios com passo a passo.</p></div>
+            <div class='feature-card'><h3> Ficha de Clientes</h3><p>Histórico completo com valor pago, pendente e ficha detalhada.</p></div>
+            <div class='feature-card'><h3> Vídeos e Cursos</h3><p>Aprenda a usar todas as funções com nossos vídeos exclusivos.</p></div>
+        </div>
+    </section>
+
+    <div class='footer'>ClimaGestão  2026 - Sistema profissional para climatização e refrigeração</div>
+</body>
+</html>

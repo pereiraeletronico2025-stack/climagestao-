@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Agendamentos & OS - {{ config.nome_empresa }}</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+    <style>
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-btn { padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; border: none; color: #fff; font-size: 0.9rem; }
+        .dropdown-content { display: none; position: absolute; background: #fff; min-width: 320px; max-height: 400px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.2); border-radius: 8px; z-index: 100; margin-top: 5px; }
+        .dropdown-content.show { display: block; }
+        .dropdown-item { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: #0f172a; cursor: pointer; }
+        .dropdown-item:hover { background: #f1f5f9; }
+        .dropdown-item strong { display: block; font-size: 0.9rem; }
+        .dropdown-item small { color: #64748b; font-size: 0.75rem; }
+        .dd-valor { font-weight: bold; font-size: 0.95rem; }
+    </style>
+</head>
+<body>
+    <div class='hvac-container' style='max-width: 1100px;'>
+        <header class='hvac-header'>
+            <a href='/' class='btn-back'> Painel</a>
+            <h2> Agendamentos Online & Ordens de Serviço</h2>
+        </header>
+
+        <div class='card-tech' style='margin-bottom: 20px; background: #e0f2fe; border-color: #00A6FF; color: #0369a1;'>
+            <h4 style='margin: 0 0 8px 0;'> Link para o Cliente agendar:</h4>
+            <input type='text' id='link-cli' value='{{ request.host_url }}agendar' class='input-hvac' readonly style='background:#fff; color:#0369a1; font-weight:bold;'>
+            <div style='display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; align-items:center;'>
+                <button onclick='copiarLink()' class='btn-primary-hvac' style='width:auto;'> Copiar Link</button>
+                <a href='/disponibilidade' class='btn-primary-hvac' style='width:auto; background:#8b5cf6;'> Configurar Dias Livres</a>
+
+                <!-- ABA VALORES PAGOS -->
+                <div class='dropdown'>
+                    <button class='dropdown-btn' style='background:#10b981;' onclick='toggleDrop("dd-pagos")'> Valores Pagos ({{ pagos|length }}) </button>
+                    <div id='dd-pagos' class='dropdown-content'>
+                        {% for p in pagos %}
+                        <a href='/ficha-cliente/{{ p[0] }}' class='dropdown-item'>
+                            <div>
+                                <strong>{{ p[1] }}</strong>
+                                <small>{{ p[5] }}  {{ p[7] }}</small>
+                            </div>
+                            <div class='dd-valor' style='color:#10b981;'>R$ {{ "%.2f"|format((p[11] or 0)|float) }}</div>
+                        </a>
+                        {% else %}
+                        <div style='padding:20px; text-align:center; color:#888;'>Nenhum pagamento recebido ainda.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- ABA VALORES PENDENTES -->
+                <div class='dropdown'>
+                    <button class='dropdown-btn' style='background:#ef4444;' onclick='toggleDrop("dd-pendentes")'> Valores Pendentes ({{ pendentes|length }}) </button>
+                    <div id='dd-pendentes' class='dropdown-content'>
+                        {% for p in pendentes %}
+                        <a href='/ficha-cliente/{{ p[0] }}' class='dropdown-item'>
+                            <div>
+                                <strong>{{ p[1] }}</strong>
+                                <small>{{ p[5] }}  Venc: {{ p[15] or "Sem data" }}</small>
+                            </div>
+                            <div class='dd-valor' style='color:#ef4444;'>R$ {{ "%.2f"|format((p[11] or 0)|float) }}</div>
+                        </a>
+                        {% else %}
+                        <div style='padding:20px; text-align:center; color:#888;'>Nenhum valor pendente no momento. </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            {% if pendentes %}
+            <div style='margin-top:10px; padding:10px; background:#fef3c7; border-radius:6px; color:#b45309; font-weight:bold;'>
+                 Total a Receber: R$ {{ "%.2f"|format((total_pendente or 0)|float) }}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class='card-tech'>
+            <table class='tech-table' style='font-size:0.82rem;'>
+                <thead>
+                    <tr>
+                        <th>Cliente / WhatsApp</th>
+                        <th>Serviço / Data</th>
+                        <th>Valor / Pagamento</th>
+                        <th>Status</th>
+                        <th>Funcionário</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in agendamentos %}
+                    <tr>
+                        <td>
+                            <a href='/ficha-cliente/{{ a[0] }}' style='color:#0f172a; text-decoration:none;'>
+                                <strong>{{ a[1] }}</strong>
+                            </a><br>
+                            <a href='https://api.whatsapp.com/send?phone=55{{ a[2]|replace(" ","")|replace("-","")|replace("(","")|replace(")","") }}' target='_blank' style='color:#25D366; font-weight:bold; text-decoration:none;'> {{ a[2] }}</a>
+                            <br><small style='color:#64748b;'>{{ a[3] }} - {{ a[4] or '' }}</small>
+                            {% if a[3] %}
+                            <br><a href='https://www.google.com/maps/search/?api=1&query={{ a[3]|urlencode }}+{{ (a[4] or "")|urlencode }}' target='_blank' style='color:#00A6FF; font-size:0.75rem;'> GPS</a>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <b>{{ a[5] }}</b><br>
+                            <small>{{ a[6] or '' }}</small><br>
+                            <span class='status-badge badge-info'> {{ a[7] }}  {{ a[8] }}</span>
+                        </td>
+                        <td>
+                            <strong style='color:#10b981; font-size:1.05em;'>R$ {{ "%.2f"|format((a[11] or 0)|float) }}</strong><br>
+                            <small>{{ a[12] or 'Pix' }}</small>
+                            {% if a[15] %}<br><small style='color:#b45309;'>Venc: {{ a[15] }}</small>{% endif %}
+                        </td>
+                        <td>
+                            {% if a[14] == 'Realizado' %}
+                                <span class='status-badge badge-success'> Realizado</span>
+                            {% elif a[14] == 'Confirmado' %}
+                                <span class='status-badge badge-info'> Confirmado</span>
+                            {% else %}
+                                <span class='status-badge badge-warning'> {{ a[9] or a[14] or 'Pendente' }}</span>
+                            {% endif %}
+                            <br>
+                            {% if a[13] == 'Pago' %}
+                                <span class='status-badge badge-success'> Pago</span>
+                            {% else %}
+                                <span class='status-badge badge-danger'> A Receber</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ a[17] or '' }}</td>
+                        <td>
+                            <div style='display:flex; flex-direction:column; gap:4px;'>
+                                <a href='/ficha-cliente/{{ a[0] }}' class='status-badge badge-warning' style='text-decoration:none; text-align:center;'> Ficha</a>
+                                <a href='/agendamento/editar/{{ a[0] }}' class='status-badge badge-info' style='text-decoration:none; text-align:center;'> Editar</a>
+                                <a href='/agendamento/excluir/{{ a[0] }}' class='status-badge badge-danger' style='text-decoration:none; text-align:center;' onclick='return confirm("Excluir este agendamento/OS?")'> Excluir</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan='6' style='text-align:center; padding:25px; color:#888;'>
+                            Nenhum agendamento ainda.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function copiarLink() {
+            var el = document.getElementById("link-cli");
+            el.select();
+            navigator.clipboard.writeText(el.value);
+            alert("Link copiado!");
+        }
+        function toggleDrop(id) {
+            document.querySelectorAll('.dropdown-content').forEach(d => {
+                if (d.id !== id) d.classList.remove('show');
+            });
+            document.getElementById(id).classList.toggle('show');
+        }
+        // Fecha ao clicar fora
+        window.onclick = function(e) {
+            if (!e.target.matches('.dropdown-btn')) {
+                document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+            }
+        }
+    </script>
+</body>
+</html>

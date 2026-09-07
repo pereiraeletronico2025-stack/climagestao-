@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Esteira de Serviços - {{ config.nome_empresa }}</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.kanban-board { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 20px; }
+.kanban-col { min-width: 280px; max-width: 320px; background: #0b1329; border-radius: 10px; border: 1px solid #223767; padding: 15px; flex-shrink: 0; }
+.col-head { font-weight: bold; font-size: 0.95rem; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00A6FF; padding-bottom: 8px; color: #e2e8f0; }
+.k-card { background: #152243; border-radius: 8px; padding: 12px; margin-bottom: 10px; border: 1px solid #223767; font-size: 0.85rem; }
+.k-card strong { font-size: 0.95rem; color: #fff; display: block; margin-bottom: 4px; }
+.k-card small { color: #94a3b8; display: block; }
+.k-price { color: #10b981; font-weight: bold; font-size: 1rem; margin: 6px 0; }
+.btn-step { width: 100%; padding: 8px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; margin-top: 6px; text-decoration: none; display: block; text-align: center; box-sizing: border-box; font-size: 0.8rem; }
+.btn-blue { background: #00A6FF; color: #fff; }
+.btn-green { background: #10b981; color: #fff; }
+.btn-purple { background: #8b5cf6; color: #fff; }
+.btn-row { display: flex; gap: 6px; margin-top: 8px; }
+.btn-row a { flex: 1; padding: 6px; border-radius: 6px; text-align: center; text-decoration: none; font-size: 0.75rem; font-weight: bold; }
+.btn-edit { background: #e0f2fe; color: #0369a1; }
+.btn-del { background: #fee2e2; color: #b91c1c; }
+</style>
+</head>
+<body>
+<div class="hvac-container" style="max-width: 1400px;">
+  <header class="hvac-header">
+    <a href="/" class="btn-back"> Painel</a>
+    <h2> Esteira de Serviços (Fluxo HVAC)</h2>
+  </header>
+
+  <div class="kanban-board">
+    <!-- COLUNA 1: AGENDADO -->
+    <div class="kanban-col">
+      <div class="col-head" style="border-color: #3b82f6;"> 1. Agendado ({{ e1|length }})</div>
+      {% for a in e1 %}
+      <div class="k-card">
+        <strong>{{ a[1] }}</strong>
+        <small> {{ a[2] }}</small>
+        <small> {{ a[5] }}</small>
+        <small> {{ a[7] }} - {{ a[8] }}</small>
+        <a href="/fluxo/avancar/{{ a[0] }}/3" class="btn-step btn-blue"> Gerar Orçamento</a>
+        <div class="btn-row">
+          <a href="/agendamento/editar/{{ a[0] }}" class="btn-edit"> Editar</a>
+          <a href="/agendamento/excluir/{{ a[0] }}" class="btn-del" onclick="return confirm('Excluir este agendamento?')"> Excluir</a>
+        </div>
+      </div>
+      {% else %}<small style="color: #64748b;">Nenhum nesta etapa</small>{% endfor %}
+    </div>
+
+    <!-- COLUNA 2: ORÇAMENTO -->
+    <div class="kanban-col">
+      <div class="col-head" style="border-color: #f59e0b;"> 2. Orçamento ({{ e2|length }})</div>
+      {% for a in e2 %}
+      <div class="k-card">
+        <strong>{{ a[1] }}</strong>
+        <small> {{ a[5] }}</small>
+        <div class="k-price">R$ {{ "%.2f"|format((a[11] or 0)|float) }}</div>
+        <a href="/fluxo/avancar/{{ a[0] }}/5" class="btn-step btn-green"> Cliente Aprovou</a>
+        <div class="btn-row">
+          <a href="/agendamento/editar/{{ a[0] }}" class="btn-edit"> Editar</a>
+          <a href="/agendamento/excluir/{{ a[0] }}" class="btn-del" onclick="return confirm('Excluir?')"> Excluir</a>
+        </div>
+      </div>
+      {% else %}<small style="color: #64748b;">Nenhum nesta etapa</small>{% endfor %}
+    </div>
+
+    <!-- COLUNA 3: EXECUÇÃO & FOTOS -->
+    <div class="kanban-col">
+      <div class="col-head" style="border-color: #8b5cf6;"> 3. Em Execução ({{ e3|length }})</div>
+      {% for a in e3 %}
+      <div class="k-card">
+        <strong>{{ a[1] }}</strong>
+        <small> {{ a[5] }}</small>
+        <a href="/fluxo/executar/{{ a[0] }}" class="btn-step btn-purple"> Fotos, Checklist & Assinatura</a>
+        <div class="btn-row">
+          <a href="/agendamento/editar/{{ a[0] }}" class="btn-edit"> Editar</a>
+          <a href="/agendamento/excluir/{{ a[0] }}" class="btn-del" onclick="return confirm('Excluir?')"> Excluir</a>
+        </div>
+      </div>
+      {% else %}<small style="color: #64748b;">Nenhum nesta etapa</small>{% endfor %}
+    </div>
+
+    <!-- COLUNA 4: PAGAMENTO -->
+    <div class="kanban-col">
+      <div class="col-head" style="border-color: #10b981;"> 4. Pagamento ({{ e4|length }})</div>
+      {% for a in e4 %}
+      <div class="k-card">
+        <strong>{{ a[1] }}</strong>
+        <small> {{ a[12] or 'Pix' }}</small>
+        <div class="k-price">R$ {{ "%.2f"|format((a[11] or 0)|float) }}</div>
+        <a href="/fluxo/pagar/{{ a[0] }}" class="btn-step btn-green"> Receber & Lançar Caixa</a>
+        <div class="btn-row">
+          <a href="/agendamento/editar/{{ a[0] }}" class="btn-edit"> Editar</a>
+          <a href="/agendamento/excluir/{{ a[0] }}" class="btn-del" onclick="return confirm('Excluir?')"> Excluir</a>
+        </div>
+      </div>
+      {% else %}<small style="color: #64748b;">Nenhum nesta etapa</small>{% endfor %}
+    </div>
+
+    <!-- COLUNA 5: CONCLUÍDO -->
+    <div class="kanban-col">
+      <div class="col-head" style="border-color: #00A6FF;"> 5. Concluído ({{ e5|length }})</div>
+      {% for a in e5 %}
+      <div class="k-card">
+        <strong>{{ a[1] }}</strong>
+        <small> Concluído & Pago</small>
+        <a href="/ficha-cliente/{{ a[0] }}" class="btn-step btn-blue"> Ver Ficha / Relatório</a>
+        <div class="btn-row">
+          <a href="/agendamento/editar/{{ a[0] }}" class="btn-edit"> Editar</a>
+          <a href="/agendamento/excluir/{{ a[0] }}" class="btn-del" onclick="return confirm('Excluir?')"> Excluir</a>
+        </div>
+      </div>
+      {% else %}<small style="color: #64748b;">Nenhum nesta etapa</small>{% endfor %}
+    </div>
+  </div>
+</div>
+</body>
+</html>

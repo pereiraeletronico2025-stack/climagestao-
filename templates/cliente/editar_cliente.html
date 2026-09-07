@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Editar Cliente</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='header'>
+        <h1>Editar Cliente #{{ cliente[0] }}</h1>
+        <a href='/clientes' class='btn-voltar'>⬅ Voltar</a>
+    </div>
+    <div class='container'>
+        <form method='post' class='form-painel'>
+            <h3>Atualizar Dados do Cliente</h3>
+            <label>Nome Completo:</label>
+            <input type='text' name='nome' value='{{ cliente[1] }}' required>
+
+            <label>Email:</label>
+            <input type='email' name='email' value='{{ cliente[2] or "" }}'>
+
+            <label>Tipo de Pessoa:</label>
+            <select name='tipo'>
+                <option value='PF' {% if cliente[3] == 'PF' %}selected{% endif %}>Fisica (CPF)</option>
+                <option value='PJ' {% if cliente[3] == 'PJ' %}selected{% endif %}>Juridica (CNPJ)</option>
+            </select>
+
+            <label>CPF ou CNPJ:</label>
+            <input type='text' name='documento' value='{{ cliente[4] or "" }}'>
+
+            <label>Telefone / WhatsApp:</label>
+            <input type='text' name='telefone' value='{{ cliente[5] or "" }}'>
+
+            <label>Endereco Completo:</label>
+            <input type='text' name='endereco' value='{{ cliente[6] or "" }}'>
+
+            <label>Observacoes:</label>
+            <textarea name='observacoes'>{{ cliente[7] or "" }}</textarea>
+
+            <label>Data da 1a Visita:</label>
+            <input type='date' name='data_visita_inicial' value='{{ cliente[8] or "" }}'>
+
+            <label>Data Retorno Programado:</label>
+            <input type='date' name='data_retorno_programado' value='{{ cliente[9] or "" }}'>
+
+            <button class='btn-salvar' type='submit'>Salvar Alteracoes</button>
+        </form>
+    </div>
+</body>
+</html>

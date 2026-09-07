@@ -1,0 +1,131 @@
+﻿<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Comprovante de Servico - Clima Gestao</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+    <style>
+        .recibo-card {
+            background: #fff;
+            max-width: 650px;
+            margin: 20px auto;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-top: 6px solid #1e5bb8;
+        }
+        .recibo-topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #eef2f7;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .recibo-detalhe {
+            margin-bottom: 12px;
+            font-size: 0.95em;
+        }
+        .recibo-detalhe strong {
+            color: #1e5bb8;
+            display: inline-block;
+            width: 140px;
+        }
+        .valor-destaque {
+            background: #e8f5e9;
+            border: 2px dashed #4caf50;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .acoes-recibo {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+        .btn-whats {
+            background: #25d366;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-imprimir {
+            background: #1e5bb8;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        @media print {
+            .header, .btn-voltar, .acoes-recibo { display: none !important; }
+            body { background: #fff; }
+            .recibo-card { box-shadow: none; border: 1px solid #ccc; margin: 0; width: 100%; max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class='header'>
+        <h1>🧾 Recibo / Ordem de Servico</h1>
+        <a href='/servicos' class='btn-voltar'>⬅ Voltar aos Servicos</a>
+    </div>
+
+    <div class='container'>
+        <div class='recibo-card'>
+            <div class='recibo-topo'>
+                <div>
+                    <h2 style='color: #1e5bb8;'>CLIMA GESTAO</h2>
+                    <p style='color: #777; font-size: 0.85em;'>Servicos Especializados de Ar-Condicionado</p>
+                </div>
+                <div style='text-align: right;'>
+                    <span style='font-size: 1.1em; font-weight: bold; color: #444;'>OS #{{ servico[0] }}</span><br>
+                    <span style='font-size: 0.85em; color: #888;'>Data: {{ servico[6] or 'Nao informada' }}</span>
+                </div>
+            </div>
+
+            <h3 style='margin-bottom: 15px; color: #333;'>Dados do Atendimento</h3>
+            <div class='recibo-detalhe'><strong>Cliente:</strong> {{ servico[1] }}</div>
+            <div class='recibo-detalhe'><strong>Documento (CPF/CNPJ):</strong> {{ servico[2] or 'Nao informado' }}</div>
+            <div class='recibo-detalhe'><strong>Telefone:</strong> {{ servico[3] or 'Nao informado' }}</div>
+            <div class='recibo-detalhe'><strong>Endereco:</strong> {{ servico[4] or 'Nao informado' }}</div>
+
+            <hr style='border: none; border-top: 1px solid #edf1f5; margin: 15px 0;'>
+
+            <h3 style='margin-bottom: 15px; color: #333;'>Dados do Equipamento e Servico</h3>
+            <div class='recibo-detalhe'><strong>Aparelho:</strong> {{ servico[5] }}</div>
+            <div class='recibo-detalhe'><strong>Tipo de Servico:</strong> {{ servico[7] }}</div>
+            <div class='recibo-detalhe'><strong>Descricao:</strong> {{ servico[8] or 'Padrao executado conforme normas tecnicas.' }}</div>
+            <div class='recibo-detalhe'><strong>Tecnico:</strong> {{ servico[9] or 'Equipe Tecnica' }}</div>
+            <div class='recibo-detalhe'><strong>Forma Pagamento:</strong> {{ servico[10] }}</div>
+            <div class='recibo-detalhe'><strong>Situacao / Status:</strong> {{ servico[11] }}</div>
+
+            <div class='valor-destaque'>
+                <div style='font-size: 0.9em; color: #2e7d32; font-weight: bold;'>VALOR TOTAL DO SERVICO</div>
+                <div style='font-size: 1.8em; font-weight: bold; color: #1b5e20;'>R$ {{ "%.2f"|format(servico[12]) }}</div>
+            </div>
+
+            <p style='text-align: center; font-size: 0.8em; color: #888;'>
+                Garantia de 90 dias sobre a mao de obra do servico executado.
+            </p>
+
+            <div class='acoes-recibo'>
+                <button class='btn-imprimir' onclick='window.print()'>🖨️ Imprimir / Salvar PDF</button>
+                {% if servico[3] %}
+                <a href="https://api.whatsapp.com/send?phone=55{{ servico[3]|replace(' ','')|replace('-','')|replace('(','')|replace(')','') }}&text=Ola%20{{ servico[1] }},%20segue%20o%20comprovante/recibo%20do%20seu%20servico%20de%20{{ servico[7] }}%20no%20valor%20de%20R$%20{{ '%.2f'|format(servico[12]) }}.%20Agradecemos%20a%20preferencia!" target='_blank' class='btn-whats'>
+                    💬 Enviar no WhatsApp
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

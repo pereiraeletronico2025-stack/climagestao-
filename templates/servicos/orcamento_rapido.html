@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Orçamento Rápido - {{ config.nome_empresa }}</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='hvac-container' style='max-width: 1100px;'>
+        <header class='hvac-header'>
+            <a href='/' class='btn-back'> Painel</a>
+            <h2> Gerador & Histórico de Orçamentos</h2>
+            <a href='/catalogos' class='btn-primary-hvac' style='width: auto; background: #8b5cf6;'> Configurar Tabela</a>
+        </header>
+
+        <!-- FORMULÁRIO DE ORÇAMENTO -->
+        <div class='card-tech' style='margin-bottom: 30px;'>
+            <h3> Gerar Novo Orçamento</h3>
+            <form method='POST' action='/orcamento-rapido/salvar' id='form-orcamento'>
+                <div class='form-grid'>
+                    <!-- CLIENTE -->
+                    <div class='form-group' style='grid-column: span 2;'>
+                        <label>Selecione o Cliente:</label>
+                        <select id='select-cliente' name='cliente_id' class='input-hvac' onchange='mudarCliente()'>
+                            <option value='novo'> Novo Cliente (Digitar Manualmente)</option>
+                            {% for c in clientes %}
+                                <option value='{{ c[0] }}' data-nome='{{ c[1] }}' data-tel='{{ c[2] }}'>{{ c[1] }} {% if c[2] %}({{ c[2] }}){% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class='form-group' id='div-nome-novo'>
+                        <label>Nome do Cliente:</label>
+                        <input type='text' id='orc-cliente' name='cliente_nome' class='input-hvac' placeholder='Ex: Carlos Eduardo' required>
+                    </div>
+                    <div class='form-group' id='div-tel-novo'>
+                        <label>WhatsApp (com DDD):</label>
+                        <input type='text' id='orc-tel' name='telefone' class='input-hvac' placeholder='Ex: 11999998888' required>
+                    </div>
+
+                    <!-- EQUIPAMENTO -->
+                    <div class='form-group'>
+                        <label>Equipamento:</label>
+                        <select id='select-aparelho' name='equipamento_select' class='input-hvac' onchange='mudarAparelho()'>
+                            <option value=''>-- Selecione o Aparelho --</option>
+                            {% for e in equipamentos %}
+                                <option value='{{ e[1] }}'>{{ e[1] }}</option>
+                            {% endfor %}
+                            <option value='outro'> Outro (Digitar)</option>
+                        </select>
+                        <input type='text' id='orc-aparelho' name='equipamento_outro' class='input-hvac' style='display:none; margin-top:5px;' placeholder='Qual aparelho?'>
+                    </div>
+
+                    <!-- SERVIÇO -->
+                    <div class='form-group'>
+                        <label>Serviço a Realizar:</label>
+                        <select id='select-servico' name='servico_select' class='input-hvac' onchange='mudarServico()'>
+                            <option value='' data-preco='0'>-- Selecione o Serviço --</option>
+                            {% for s in servicos %}
+                                <option value='{{ s[1] }}' data-preco='{{ s[2] }}'>{{ s[1] }}</option>
+                            {% endfor %}
+                            <option value='outro' data-preco='0'> Outro (Digitar)</option>
+                        </select>
+                        <input type='text' id='orc-servico' name='servico_outro' class='input-hvac' style='display:none; margin-top:5px;' placeholder='Qual serviço?'>
+                    </div>
+
+                    <!-- VALORES -->
+                    <div class='form-group'>
+                        <label>Mão de Obra (R$):</label>
+                        <input type='number' step='0.01' id='orc-mo' name='valor_mo' class='input-hvac' placeholder='0.00' oninput='calcular()'>
+                    </div>
+                    <div class='form-group'>
+                        <label>Peças / Materiais (R$):</label>
+                        <input type='number' step='0.01' id='orc-mat' name='valor_pecas' class='input-hvac' placeholder='0.00' value='0' oninput='calcular()'>
+                    </div>
+
+                    <div class='form-group' style='grid-column: span 2;'>
+                        <label>Garantia Oferta:</label>
+                        <select name='garantia' class='input-hvac'>
+                            <option value='90 dias (Padrão Legal)'>90 dias (Padrão Legal)</option>
+                            <option value='6 meses'>6 meses</option>
+                            <option value='1 ano'>1 ano</option>
+                            <option value='Apenas Diagnóstico'>Apenas Diagnóstico (Sem garantia)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class='result-box'>
+                    <h4>Total do Orçamento: R$ <span id='orc-total'>0,00</span></h4>
+                </div>
+
+                <button type='submit' class='btn-whatsapp' style='margin-top: 20px; font-size: 1.1rem; padding: 14px;'> Salvar e Enviar no WhatsApp</button>
+            </form>
+        </div>
+
+        <!-- TABELA DO HISTÓRICO DE ORÇAMENTOS REGISTRADOS -->
+        <div class='card-tech'>
+            <h3> Histórico de Orçamentos Cadastrados</h3>
+            <table class='tech-table' style='font-size: 0.88rem;'>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Cliente / WhatsApp</th>
+                        <th>Equipamento / Serviço</th>
+                        <th>Valor Total</th>
+                        <th>Garantia</th>
+                        <th style='text-align: center;'>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in orcamentos %}
+                    <tr>
+                        <td><strong>{{ (o[10]|string)[:10] if o[10] else '--' }}</strong></td>
+                        <td>
+                            <b>{{ o[2] }}</b><br>
+                            <small style='color: #25D366; font-weight: bold;'> {{ o[3] }}</small>
+                        </td>
+                        <td>
+                            <b>{{ o[5] }}</b><br>
+                            <small style='color: #64748b;'>{{ o[4] or 'N/I' }}</small>
+                        </td>
+                        <td>
+                            <strong style='color: #10b981; font-size: 1.05rem;'>R$ {{ "%.2f"|format((o[8] or 0)|float) }}</strong>
+                        </td>
+                        <td><span class='status-badge badge-info'>{{ o[9] or '90 dias' }}</span></td>
+                        <td style='text-align: center;'>
+                            <div style='display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;'>
+                                <button type='button' class='status-badge badge-success' style='border:none; cursor:pointer; padding:6px 10px;' onclick='reenviarZap("{{ o[2] }}", "{{ o[3] }}", "{{ o[4] or "" }}", "{{ o[5] }}", "{{ "%.2f"|format((o[8] or 0)|float) }}", "{{ o[9] or "90 dias" }}")'> Reenviar</button>
+                                <a href='/orcamento-rapido/editar/{{ o[0] }}' class='status-badge badge-info' style='text-decoration: none; padding: 6px 10px;'> Editar</a>
+                                <a href='/orcamento-rapido/excluir/{{ o[0] }}' class='status-badge badge-danger' style='text-decoration: none; padding: 6px 10px;' onclick='return confirm("Excluir este orçamento?")'> Excluir</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan='6' style='text-align: center; padding: 25px; color: #888;'>
+                            Nenhum orçamento registrado ainda. Preencha o formulário acima para gerar o primeiro!
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const dadosClientes = {
+            {% for c in clientes %}
+                "{{ c[0] }}": { nome: "{{ c[1] }}", tel: "{{ c[2] }}" },
+            {% endfor %}
+        };
+
+        function mudarCliente() {
+            const val = document.getElementById('select-cliente').value;
+            const inputNome = document.getElementById('orc-cliente');
+            const inputTel = document.getElementById('orc-tel');
+
+            if (val === 'novo') {
+                inputNome.value = '';
+                inputTel.value = '';
+                inputNome.readOnly = false;
+                inputTel.readOnly = false;
+            } else {
+                inputNome.value = dadosClientes[val].nome;
+                inputTel.value = dadosClientes[val].tel;
+                inputNome.readOnly = true;
+                inputTel.readOnly = true;
+            }
+        }
+
+        function mudarAparelho() {
+            const select = document.getElementById('select-aparelho');
+            const input = document.getElementById('orc-aparelho');
+            if(select.value === 'outro') {
+                input.style.display = 'block';
+                input.value = '';
+            } else {
+                input.style.display = 'none';
+                input.value = select.value;
+            }
+        }
+
+        function mudarServico() {
+            const select = document.getElementById('select-servico');
+            const input = document.getElementById('orc-servico');
+            const moInput = document.getElementById('orc-mo');
+            
+            const preco = select.options[select.selectedIndex].getAttribute('data-preco');
+            moInput.value = parseFloat(preco || 0).toFixed(2);
+            
+            if(select.value === 'outro') {
+                input.style.display = 'block';
+                input.value = '';
+                moInput.value = '';
+            } else {
+                input.style.display = 'none';
+                input.value = select.value;
+            }
+            calcular();
+        }
+
+        function calcular() {
+            let mo = parseFloat(document.getElementById('orc-mo').value) || 0;
+            let mat = parseFloat(document.getElementById('orc-mat').value) || 0;
+            document.getElementById('orc-total').innerText = (mo + mat).toFixed(2).replace('.', ',');
+        }
+
+        function reenviarZap(cli, tel, eq, srv, tot, gar) {
+            let emp = '{{ config.nome_empresa or "ClimaGestão" }}';
+            let telLindo = tel.replace(/\D/g, '');
+            let txt = `*ORÇAMENTO TÉCNICO - ${emp}*%0A%0A` +
+                      ` *Cliente:* ${cli}%0A` +
+                      ` *Equipamento:* ${eq}%0A` +
+                      ` *Serviço:* ${srv}%0A` +
+                      ` *Valor Total:* R$ ${tot}%0A` +
+                      ` *Garantia:* ${gar}%0A%0A` +
+                      `_Orçamento válido por 10 dias. Podemos agendar?_`;
+            window.open(`https://api.whatsapp.com/send?phone=55${telLindo}&text=${txt}`, '_blank');
+        }
+
+        window.onload = function() {
+            mudarCliente();
+            mudarAparelho();
+            mudarServico();
+
+            // Se acabou de salvar um orçamento, abre o WhatsApp automaticamente
+            {% if reenviar_zap %}
+                reenviarZap("{{ reenviar_zap.nome }}", "{{ reenviar_zap.tel }}", "{{ reenviar_zap.equip }}", "{{ reenviar_zap.serv }}", "{{ reenviar_zap.total }}", "{{ reenviar_zap.gar }}");
+            {% endif %}
+        };
+    </script>
+</body>
+</html>

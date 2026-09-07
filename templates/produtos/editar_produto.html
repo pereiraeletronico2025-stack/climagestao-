@@ -1,0 +1,48 @@
+﻿<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Editar Produto</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='header'>
+        <h1>Editar Produto #{{ produto[0] }}</h1>
+        <a href='/produtos' class='btn-voltar'>⬅ Voltar</a>
+    </div>
+    <div class='container'>
+        <form method='post' class='form-painel'>
+            <h3>Atualizar Produto / Estoque</h3>
+            <label>Codigo de Barras:</label>
+            <input type='text' name='codigo_barras' value='{{ produto[1] or "" }}'>
+
+            <label>Nome do Produto / Peca:</label>
+            <input type='text' name='nome' value='{{ produto[2] }}' required>
+
+            <label>Descricao:</label>
+            <input type='text' name='descricao' value='{{ produto[3] or "" }}'>
+
+            <label>Unidade de Medida:</label>
+            <select name='unidade'>
+                <option value='UN' {% if produto[4] == 'UN' %}selected{% endif %}>Unidade (UN)</option>
+                <option value='MT' {% if produto[4] == 'MT' %}selected{% endif %}>Metro (MT)</option>
+                <option value='KG' {% if produto[4] == 'KG' %}selected{% endif %}>Quilo (KG)</option>
+                <option value='LT' {% if produto[4] == 'LT' %}selected{% endif %}>Litro (LT)</option>
+                <option value='CX' {% if produto[4] == 'CX' %}selected{% endif %}>Caixa (CX)</option>
+            </select>
+
+            <label>Preco de Custo (R$):</label>
+            <input type='number' step='0.01' name='preco_custo' value='{{ produto[5] or 0 }}'>
+
+            <label>Preco de Venda (R$):</label>
+            <input type='number' step='0.01' name='preco_venda' value='{{ produto[6] or 0 }}' required>
+
+            <label>Quantidade em Estoque:</label>
+            <input type='number' step='1' name='quantidade_estoque' value='{{ produto[7] or 0 }}' required>
+
+            <button class='btn-salvar' type='submit'>Salvar Alteracoes</button>
+        </form>
+    </div>
+</body>
+</html>

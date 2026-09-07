@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ponto Facial - ClimaGestao</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+body{margin:0;padding:20px;background:#f4f6f9;font-family:Segoe UI,sans-serif}
+.c{max-width:1100px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;box-shadow:0 4px 15px rgba(0,0,0,.06)}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+a.btn,button.btn{display:inline-block;padding:10px 16px;border-radius:8px;border:0;color:#fff;font-weight:600;text-decoration:none;cursor:pointer}
+.g{background:#6c757d}.v{background:#28a745}.b{background:#0d6efd}.o{background:#fd7e14}.r{background:#dc3545}
+.grid{display:grid;grid-template-columns:1.2fr 1fr;gap:18px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.card{border:1px solid #e2e8f0;border-radius:12px;padding:16px}
+video,canvas{width:100%;max-height:320px;background:#111;border-radius:12px;object-fit:cover}
+.face-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;max-height:340px;overflow:auto}
+.face-item{border:2px solid #e2e8f0;border-radius:10px;padding:8px;text-align:center;cursor:pointer;transition:.15s}
+.face-item:hover,.face-item.active{border-color:#0d6efd;background:#eef5ff}
+.face-item img{width:72px;height:72px;border-radius:50%;object-fit:cover;background:#ddd}
+.face-item .n{font-size:.82em;margin-top:6px;font-weight:600}
+.alert{padding:12px;border-radius:8px;margin-bottom:12px}
+.ok{background:#d1e7dd;color:#0f5132}.warn{background:#fff3cd;color:#664d03}.err{background:#f8d7da;color:#842029}
+table{width:100%;border-collapse:collapse;margin-top:14px}th,td{padding:10px;border-bottom:1px solid #eee;text-align:left;font-size:.9em}
+th{background:#f8f9fa}
+#matchBox{display:none;padding:12px;border-radius:10px;background:#e8f5e9;margin-top:10px}
+.hint{color:#666;font-size:.88em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="c">
+  <div class="bar">
+    <a class="btn g" href="/painel">Painel</a>
+    <h2 style="margin:0">Ponto Facial</h2>
+    <a class="btn g" href="/funcionarios">Funcionarios</a>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}{% for c,m in messages %}<div class="alert ok">{{ m }}</div>{% endfor %}{% endif %}
+  {% endwith %}
+
+  <div class="grid">
+    <div class="card">
+      <h3 style="margin-top:0">Camera / Reconhecimento</h3>
+      <p class="hint">1) Abra a camera 2) Clique em "Reconhecer e Bater Ponto" 3) O sistema compara com as fotos cadastradas.</p>
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas" style="display:none"></canvas>
+      <div class="actions">
+        <button type="button" class="btn b" id="btnCam">Abrir Camera</button>
+        <button type="button" class="btn o" id="btnReco">Reconhecer e Bater Ponto</button>
+        <button type="button" class="btn v" id="btnManual">Entrada Manual</button>
+        <button type="button" class="btn r" id="btnSaida">Saida Manual</button>
+      </div>
+      <div id="matchBox">
+        <div id="matchText"></div>
+      </div>
+      <div id="status" class="hint" style="margin-top:10px">Aguardando camera...</div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">Equipe cadastrada</h3>
+      <p class="hint">Clique em um funcionario para selecionar (modo manual) ou use o reconhecimento automatico.</p>
+      <div class="face-list" id="faceList">
+        {% for f in funcionarios %}
+        <div class="face-item" data-id="{{ f.id }}" data-nome="{{ f.nome }}" data-foto="{{ f.foto_base64 or '' }}" onclick="selectFace(this)">
+          {% if f.foto_base64 %}
+          <img src="{{ f.foto_base64 }}" alt="{{ f.nome }}">
+          {% else %}
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72'%3E%3Crect fill='%23ddd' width='72' height='72'/%3E%3Ctext x='50%25' y='54%25' text-anchor='middle' fill='%23999' font-size='28'%3E?%3C/text%3E%3C/svg%3E" alt="sem foto">
+          {% endif %}
+          <div class="n">{{ f.nome }}</div>
+        </div>
+        {% else %}
+        <p class="hint">Nenhum funcionario. <a href="/funcionario/novo">Cadastre com foto</a>.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <form id="formPonto" method="POST" action="/ponto" style="display:none">
+    <input type="hidden" name="funcionario_id" id="funcionario_id">
+    <input type="hidden" name="tipo" id="tipo" value="Entrada">
+    <input type="hidden" name="foto_ponto" id="foto_ponto">
+    <input type="hidden" name="modo" id="modo" value="manual">
+  </form>
+
+  <h3>Registros recentes</h3>
+  <table>
+    <thead><tr><th>Data</th><th>Funcionario</th><th>Entrada</th><th>Saida</th><th>Horas</th><th>Foto</th></tr></thead>
+    <tbody>
+    {% if pontos %}
+      {% for p in pontos %}
+      <tr>
+        <td>{{ p.data or '-' }}</td>
+        <td>{{ p.funcionario_nome or p.funcionario_id or '-' }}</td>
+        <td>{{ p.hora_entrada or '-' }}</td>
+        <td>{{ p.hora_saida or '-' }}</td>
+        <td>{{ p.total_horas or '-' }}</td>
+        <td>{% if p.foto_base64 %}<img src="{{ p.foto_base64 }}" style="width:40px;height:40px;border-radius:6px;object-fit:cover">{% else %}-{% endif %}</td>
+      </tr>
+      {% endfor %}
+    {% else %}
+      <tr><td colspan="6" style="text-align:center;color:#888;padding:24px">Nenhum ponto ainda.</td></tr>
+    {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+let stream=null, selectedId=null, selectedNome='';
+const video=document.getElementById('video');
+const canvas=document.getElementById('canvas');
+const statusEl=document.getElementById('status');
+const matchBox=document.getElementById('matchBox');
+const matchText=document.getElementById('matchText');
+
+function selectFace(el){
+  document.querySelectorAll('.face-item').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  selectedId=el.dataset.id;
+  selectedNome=el.dataset.nome;
+  statusEl.textContent='Selecionado: '+selectedNome+' (modo manual disponivel)';
+}
+
+document.getElementById('btnCam').onclick=async()=>{
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
+    video.srcObject=stream;
+    statusEl.textContent='Camera ativa. Posicione o rosto e reconheca.';
+  }catch(e){alert('Erro na camera: '+e.message);}
+};
+
+function snap(){
+  if(!video.srcObject){alert('Abra a camera primeiro.');return null;}
+  canvas.width=video.videoWidth||640;
+  canvas.height=video.videoHeight||480;
+  canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+  return canvas.toDataURL('image/jpeg',0.85);
+}
+
+function submitPonto(funcId, tipo, foto, modo){
+  document.getElementById('funcionario_id').value=funcId;
+  document.getElementById('tipo').value=tipo;
+  document.getElementById('foto_ponto').value=foto||'';
+  document.getElementById('modo').value=modo||'manual';
+  document.getElementById('formPonto').submit();
+}
+
+document.getElementById('btnManual').onclick=()=>{
+  if(!selectedId){alert('Selecione um funcionario na lista ao lado.');return;}
+  const foto=snap();
+  submitPonto(selectedId,'Entrada',foto,'manual');
+};
+document.getElementById('btnSaida').onclick=()=>{
+  if(!selectedId){alert('Selecione um funcionario na lista ao lado.');return;}
+  const foto=snap();
+  submitPonto(selectedId,'Saida',foto,'manual');
+};
+
+// Reconhecimento facial simplificado por similaridade de histograma de cores da imagem
+// (funciona bem em ambiente controlado; fotos cadastradas na mesma camera ajudam)
+function imageDataFromDataUrl(dataUrl){
+  return new Promise((resolve)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement('canvas');
+      c.width=64; c.height=64;
+      const ctx=c.getContext('2d');
+      ctx.drawImage(img,0,0,64,64);
+      resolve(ctx.getImageData(0,0,64,64).data);
+    };
+    img.src=dataUrl;
+  });
+}
+function histFeature(data){
+  // histograma RGB reduzido (16 bins cada) + foco centro (rosto)
+  const bins=new Array(48).fill(0);
+  const n=data.length/4;
+  for(let i=0;i<data.length;i+=4){
+    const px=(i/4);
+    const x=px%64, y=Math.floor(px/64);
+    // peso maior no centro
+    const cx=x-32, cy=y-32; const w=Math.exp(-(cx*cx+cy*cy)/400);
+    bins[(data[i]>>4)] += w;
+    bins[16+(data[i+1]>>4)] += w;
+    bins[32+(data[i+2]>>4)] += w;
+  }
+  // normaliza
+  let s=bins.reduce((a,b)=>a+b,0)||1;
+  return bins.map(v=>v/s);
+}
+function cosineSim(a,b){
+  let dot=0,na=0,nb=0;
+  for(let i=0;i<a.length;i++){dot+=a[i]*b[i];na+=a[i]*a[i];nb+=b[i]*b[i];}
+  return dot/(Math.sqrt(na)*Math.sqrt(nb)+1e-9);
+}
+
+document.getElementById('btnReco').onclick=async()=>{
+  const foto=snap();
+  if(!foto) return;
+  statusEl.textContent='Comparando com fotos cadastradas...';
+  const liveFeat=histFeature(await imageDataFromDataUrl(foto));
+  const items=[...document.querySelectorAll('.face-item')].filter(el=>el.dataset.foto && el.dataset.foto.startsWith('data:'));
+  if(!items.length){
+    alert('Nenhum funcionario com foto cadastrada. Cadastre a foto no funcionario primeiro.');
+    return;
+  }
+  let best=null, bestScore=-1;
+  for(const el of items){
+    try{
+      const feat=histFeature(await imageDataFromDataUrl(el.dataset.foto));
+      const score=cosineSim(liveFeat, feat);
+      if(score>bestScore){bestScore=score; best=el;}
+    }catch(e){}
+  }
+  // limiar empirico
+  if(!best || bestScore < 0.82){
+    matchBox.style.display='block';
+    matchBox.style.background='#fff3cd';
+    matchText.innerHTML='Nao reconheci com confianca (score '+(bestScore*100).toFixed(1)+'%). Selecione manualmente na lista e use Entrada/Saida Manual.';
+    statusEl.textContent='Reconhecimento inconclusivo. Use modo manual.';
+    return;
+  }
+  selectedId=best.dataset.id;
+  selectedNome=best.dataset.nome;
+  document.querySelectorAll('.face-item').forEach(x=>x.classList.remove('active'));
+  best.classList.add('active');
+  matchBox.style.display='block';
+  matchBox.style.background='#e8f5e9';
+  matchText.innerHTML='Reconhecido: <b>'+selectedNome+'</b> (confianca '+(bestScore*100).toFixed(1)+'%). Registrando ENTRADA...';
+  statusEl.textContent='Match: '+selectedNome;
+  // Decide entrada ou saida automaticamente no backend; enviamos Entrada e backend pode alternar
+  // Melhor: pergunta rapida
+  const tipo = confirm('Funcionario: '+selectedNome+'\\n\\nOK = ENTRADA\\nCancelar = SAIDA') ? 'Entrada' : 'Saida';
+  submitPonto(selectedId, tipo, foto, 'facial');
+};
+</script>
+</body></html>

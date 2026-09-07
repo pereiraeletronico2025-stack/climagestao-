@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Tipos de Procedimento - {{ config.nome_empresa }}</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='hvac-container'>
+        <header class='hvac-header'>
+            <a href="/painel" class="btn btn-secondary" style="background-color: #6c757d; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;"> Voltar</a>
+            <h2> Tipos de Procedimentos Técnicos</h2>
+        </header>
+
+        <div class='card-tech' style='margin-bottom: 20px;'>
+            <h3> Cadastrar Novo Tipo de Procedimento</h3>
+            <form method='POST' action='/checklists/tipos/adicionar'>
+                <div class='form-grid'>
+                    <div class='form-group'>
+                        <label>Ícone (Emoji):</label>
+                        <input type='text' name='icone' class='input-hvac' value='' maxlength='4' required>
+                    </div>
+                    <div class='form-group' style='grid-column: span 2;'>
+                        <label>Nome do Procedimento:</label>
+                        <input type='text' name='nome' class='input-hvac' placeholder='Ex: Instalação Piso Teto 60.000 BTU' required>
+                    </div>
+                </div>
+                <div class='form-group'>
+                    <label>Descrição / Observação:</label>
+                    <input type='text' name='descricao' class='input-hvac' placeholder='Ex: Procedimento para aparelhos comerciais...'>
+                </div>
+                <button type='submit' class='btn-primary-hvac' style='width: auto; margin-top: 10px;'> Cadastrar Procedimento</button>
+            </form>
+        </div>
+
+        <div class='card-tech'>
+            <h3> Procedimentos Cadastrados</h3>
+            <table class='tech-table'>
+                <thead>
+                    <tr>
+                        <th>Ícone</th>
+                        <th>Nome do Procedimento</th>
+                        <th>Descrição</th>
+                        <th>Itens</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in tipos %}
+                    <tr>
+                        <td style='font-size: 1.5rem;'>{{ t[1] }}</td>
+                        <td><strong>{{ t[2] }}</strong></td>
+                        <td style='color: #64748b; font-size: 0.9rem;'>{{ t[3] or '-' }}</td>
+                        <td><span class='status-badge badge-info'>{{ t[4] }} itens</span></td>
+                        <td>
+                            <a href='/checklists/tipos/{{ t[0] }}/itens' class='status-badge badge-info' style='text-decoration: none;'> Gerir Itens</a>
+                            <a href='/checklists/tipos/{{ t[0] }}/editar' class='status-badge badge-warning' style='text-decoration: none;'> Editar</a>
+                            <a href='/checklists/tipos/{{ t[0] }}/excluir' class='status-badge badge-danger' style='text-decoration: none;' onclick='return confirm("Deseja realmente excluir este tipo e todos os seus itens?")'> Excluir</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan='5' style='text-align: center; padding: 25px; color: #888;'>Nenhum procedimento cadastrado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

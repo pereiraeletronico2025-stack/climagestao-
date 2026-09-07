@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>{{ config.nome_empresa or 'Clima Gestão' }} - Painel</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+    <style>
+        .header-top {
+            background: linear-gradient(135deg, {{ config.cor_principal or '#1e5bb8' }}, {{ config.cor_secundaria or '#4f8cff' }});
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            margin-bottom: 25px;
+        }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .header-right { display: flex; align-items: center; gap: 10px; position: relative; }
+        
+        .btn-user-menu {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.4);
+            font-size: 0.88rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-user-menu:hover { background: rgba(255,255,255,0.3); }
+
+        .btn-logout-direct {
+            background: #ef4444;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .btn-logout-direct:hover { background: #dc2626; }
+
+        .user-dropdown-card {
+            display: none;
+            position: absolute;
+            right: 50px;
+            top: 100%;
+            margin-top: 8px;
+            background: #ffffff !important;
+            color: #0f172a !important;
+            min-width: 250px;
+            border-radius: 10px;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.3);
+            z-index: 999999 !important;
+            border: 1px solid #cbd5e1;
+            overflow: hidden;
+        }
+        .user-dropdown-card.show { display: block !important; }
+        .dropdown-head-title {
+            padding: 10px 16px;
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 0.72rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .user-dropdown-card a {
+            display: block !important;
+            padding: 12px 16px !important;
+            color: #0f172a !important;
+            text-decoration: none !important;
+            font-weight: 600 !important;
+            font-size: 0.9rem !important;
+            border-bottom: 1px solid #f1f5f9;
+            background: #ffffff !important;
+            text-align: left !important;
+        }
+        .user-dropdown-card a:hover { background: #e0f2fe !important; color: #0369a1 !important; }
+        .user-dropdown-card a.admin-link { color: #8b5cf6 !important; }
+        .user-dropdown-card a.logout-link { color: #ef4444 !important; background: #fef2f2 !important; }
+    </style>
+</head>
+<body>
+    <!-- CABEÇALHO DO PAINEL -->
+    <div class='header-top'>
+        <div class='header-left'>
+            {% if config.logo %}
+                <img src='{{ config.logo }}' style='width: 42px; height: 42px; border-radius: 8px; object-fit: contain; background: white; padding: 3px;'>
+            {% endif %}
+            <div>
+                <h1 style='font-size: 1.25rem; margin: 0; color: #ffffff;'>{{ config.nome_empresa or 'Clima Gestão' }}</h1>
+                <span style='font-size: 0.78rem; opacity: 0.88;'>{{ config.slogan or 'Sistema de Gestão para Ar-Condicionado' }}</span>
+            </div>
+        </div>
+
+        <div class='header-right'>
+            <!-- BOTÃO DO USUÁRIO ASSINANTE -->
+            <div style='position: relative;'>
+                <button type='button' class='btn-user-menu' onclick='toggleUserMenu(event)'>
+                    <span> {{ session.get('empresa') or config.nome_empresa or 'Minha Empresa' }}</span>
+                    <small style='opacity: 0.8; font-weight: normal;'>({{ session.get('email') or 'Assinante' }})</small>
+                    <span></span>
+                </button>
+
+                <!-- CARD SUSPENSO (POPUP) -->
+                <div class='user-dropdown-card' id='user-dropdown'>
+                    <div class='dropdown-head-title'>CONTA / ASSINANTE</div>
+                    <a href='/configuracoes'> Configurações do Sistema</a>
+                    <a href='/telegram'> Configuração Telegram</a>
+                    <a href='/videos-cursos'> Vídeos e Cursos</a>
+                    {% if session.get('is_admin') %}
+                        <a href='/admin' class='admin-link'> Painel Admin (Criador)</a>
+                    {% endif %}
+                    <a href='/logout' class='logout-link'> Sair da Conta</a>
+                </div>
+            </div>
+
+            <!-- BOTÃO SAIR DIRETO -->
+            <a href='/logout' class='btn-logout-direct'>Sair</a>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL (CARDS) -->
+    <div class='container'>
+        <h2 style='color: #2c3e50; font-size: 1.2em; margin-bottom: 15px;'>Painel de Controle</h2>
+
+        <div class='dashboard-cards'>
+            <!-- AGENDAMENTO ONLINE -->
+            <a href='/agendamentos-online' class='dash-card' style='border-top-color: #8b5cf6 !important;'>
+                <div class='icon'></div>
+                <h3>Agendamento Online</h3>
+                <p style='margin-top: 8px; color: #8b5cf6; font-weight: bold;'>Link do Cliente</p>
+            </a>
+
+            <!-- ESTEIRA DE SERVIÇOS -->
+            <a href='/fluxo' class='dash-card' style='border-top-color: #00A6FF !important;'>
+                <div class='icon'></div>
+                <h3>Esteira de Serviços</h3>
+                <p style='margin-top: 8px; color: #00A6FF; font-weight: bold;'>Fluxo de 10 Passos</p>
+            </a>
+
+            <!-- ALERTAS RETORNO -->
+            <a href='/alertas' class='dash-card' style='border-top-color: #ff9800 !important;'>
+                <div class='icon'></div>
+                <h3>Alertas Retorno</h3>
+                <div class='contador' style='color: #ff9800 !important;'>{{ total_alertas }}</div>
+                <p>Clientes a Contatar</p>
+            </a>
+
+            <!-- CENTRAL HVAC -->
+            <a href='/ferramentas' class='dash-card' style='border-top-color: #00A6FF !important;'>
+                <div class='icon'></div>
+                <h3>Central HVAC</h3>
+                <p style='margin-top: 8px; color: #00A6FF; font-weight: bold;'>P/T, BTUs & Erros</p>
+            </a>
+
+            <!-- CHECKLISTS -->
+            <a href='/checklists' class='dash-card' style='border-top-color: #0288d1 !important;'>
+                <div class='icon'></div>
+                <h3>Checklists</h3>
+                <p style='margin-top: 8px; color: #0288d1; font-weight: bold;'>Instalação & Higiene</p>
+            </a>
+
+            <!-- ORÇAMENTO RÁPIDO -->
+            <a href='/orcamento-rapido' class='dash-card' style='border-top-color: #25D366 !important;'>
+                <div class='icon'></div>
+                <h3>Orçamento Rápido</h3>
+                <p style='margin-top: 8px; color: #25D366; font-weight: bold;'>Enviar no WhatsApp</p>
+            </a>
+
+            <!-- CLIENTES -->
+            <a href='/clientes' class='dash-card'>
+                <div class='icon'></div>
+                <h3>Clientes</h3>
+                <div class='contador'>{{ total_clientes }}</div>
+                <p>Cadastrados</p>
+            </a>
+
+            <!-- APARELHOS -->
+            <a href='/aparelhos' class='dash-card'>
+                <div class='icon'></div>
+                <h3>Aparelhos</h3>
+                <div class='contador'>{{ total_aparelhos }}</div>
+                <p>Cadastrados</p>
+            </a>
+
+            <!-- SERVIÇOS -->
+            <a href='/servicos' class='dash-card'>
+                <div class='icon'></div>
+                <h3>Servicos</h3>
+                <div class='contador'>{{ total_servicos }}</div>
+                <p>Registrados</p>
+            </a>
+
+            <!-- FUNCIONÁRIOS -->
+            <a href='/funcionarios' class='dash-card'>
+                <div class='icon'></div>
+                <h3>Funcionarios</h3>
+                <div class='contador'>{{ total_funcionarios }}</div>
+                <p>Equipe Ativa</p>
+            </a>
+
+            <!-- PONTO FACIAL -->
+            <a href='/ponto' class='dash-card' style='border-top-color: #e91e63 !important;'>
+                <div class='icon'></div>
+                <h3>Ponto Facial</h3>
+                <div class='contador' style='color: #e91e63 !important;'>{{ total_pontos_hoje }}</div>
+                <p>Batidos Hoje</p>
+            </a>
+
+            <!-- ESTOQUE -->
+            <a href='/produtos' class='dash-card'>
+                <div class='icon'></div>
+                <h3>Estoque</h3>
+                <div class='contador'>{{ total_produtos }}</div>
+                <p>Produtos / Pecas</p>
+            </a>
+
+            <!-- CAIXA DIÁRIO -->
+            <a href='/caixa' class='dash-card' style='border-top-color: #28a745 !important;'>
+                <div class='icon'></div>
+                <h3>Caixa Diario</h3>
+                <div class='contador' style='color: #28a745 !important;'>R$ {{ "%.2f"|format(saldo_hoje) }}</div>
+                <p>Saldo do Dia</p>
+            </a>
+
+            <!-- FATURAMENTO -->
+            <a href='/faturamento' class='dash-card' style='border-top-color: #3f51b5 !important;'>
+                <div class='icon'></div>
+                <h3>Faturamento</h3>
+                <div class='contador' style='color: #3f51b5 !important;'>R$ {{ "%.2f"|format(faturamento_total) }}</div>
+                <p>Receita Total</p>
+            </a>
+
+            <!-- IMPOSTOS -->
+            <a href='/impostos' class='dash-card' style='border-top-color: #d9534f !important;'>
+                <div class='icon'></div>
+                <h3>Impostos</h3>
+                <div class='contador' style='color: #d9534f !important;'>R$ {{ "%.2f"|format(total_impostos_pendentes) }}</div>
+                <p>Apuracao & Guias</p>
+            </a>
+
+            <!-- NOTAS FISCAIS -->
+            <a href='/notas' class='dash-card' style='border-top-color: #607d8b !important;'>
+                <div class='icon'></div>
+                <h3>Notas Fiscais</h3>
+                <div class='contador'>{{ total_notas }}</div>
+                <p>NFS-e Emitidas</p>
+            </a>
+
+            <!-- RELATÓRIOS -->
+            <a href='/relatorios' class='dash-card' style='border-top-color: #9c27b0 !important;'>
+                <div class='icon'></div>
+                <h3>Relatorios</h3>
+                <p style='margin-top: 8px; color: #9c27b0; font-weight: bold;'>Comissoes & Folha</p>
+            </a>
+        </div>
+
+        <div style='text-align: center; margin-top: 25px; color: #aaa; font-size: 0.8em;'>
+            {{ config.nome_empresa or 'Clima Gestão' }} &copy; 2026 | {{ config.telefone or '' }}
+        </div>
+    </div>
+
+    <script>
+        function toggleUserMenu(e) {
+            e.stopPropagation();
+            var menu = document.getElementById('user-dropdown');
+            if (menu) {
+                menu.classList.toggle('show');
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            var menu = document.getElementById('user-dropdown');
+            if (menu && !menu.contains(e.target)) {
+                menu.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

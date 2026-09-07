@@ -1,0 +1,55 @@
+﻿<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Novo Aparelho</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='header'>
+        <h1>Novo Aparelho</h1>
+        <a href='/aparelhos' class='btn-voltar'>⬅ Voltar</a>
+    </div>
+    <div class='container'>
+        <form method='post' class='form-painel'>
+            <h3>Dados do Aparelho</h3>
+            <label>Cliente Dono:</label>
+            <select name='cliente_id' required>
+                <option value=''>Selecione o Cliente...</option>
+                {% for c in clientes %}
+                    <option value='{{ c[0] }}'>{{ c[1] }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Marca:</label>
+            <input type='text' name='marca' placeholder='Ex: LG, Midea, Springer' required>
+
+            <label>Modelo:</label>
+            <input type='text' name='modelo' placeholder='Ex: Inverter Dual 12000'>
+
+            <label>Capacidade (BTU):</label>
+            <input type='text' name='capacidade_btu' placeholder='Ex: 9000, 12000, 18000'>
+
+            <label>Voltagem:</label>
+            <select name='voltagem'>
+                <option value='220V'>220V</option>
+                <option value='110V'>110V</option>
+                <option value='Bivolt'>Bivolt</option>
+                <option value='Trifasico'>Trifasico 380V</option>
+            </select>
+
+            <label>Local Instalado:</label>
+            <input type='text' name='local_instalado' placeholder='Ex: Quarto Casal / Sala'>
+
+            <label>Data de Instalacao:</label>
+            <input type='date' name='data_instalacao'>
+
+            <label>Observacoes:</label>
+            <textarea name='observacoes'></textarea>
+
+            <button class='btn-salvar' type='submit'>Salvar Aparelho</button>
+        </form>
+    </div>
+</body>
+</html>

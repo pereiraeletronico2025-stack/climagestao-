@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Gerenciar Horários - {{ config.nome_empresa }}</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='hvac-container'>
+        <header class='hvac-header'>
+            <a href='/agendamentos-online' class='btn-back'> Voltar aos Agendamentos</a>
+            <h2> Configurar Seus Dias e Limite de Vagas</h2>
+        </header>
+
+        <!-- Formulario para Adicionar Vagas -->
+        <div class='card-tech' style='margin-bottom: 20px;'>
+            <h3> Liberar Novo Turno na Agenda</h3>
+            <form action='/disponibilidade/adicionar' method='POST'>
+                <div class='form-grid'>
+                    <div class='form-group'>
+                        <label>Escolha o Dia:</label>
+                        <input type='date' name='data' id='data_liberar' class='input-hvac' required>
+                    </div>
+                    <div class='form-group'>
+                        <label>Período / Turno:</label>
+                        <select name='periodo' class='input-hvac' required>
+                            <option value='Manhã (08h às 12h)'> Manhã (08h às 12h)</option>
+                            <option value='Tarde (13h às 18h)'> Tarde (13h às 18h)</option>
+                        </select>
+                    </div>
+                    <div class='form-group'>
+                        <label>Quantidade de Vagas / Visitas:</label>
+                        <input type='number' name='vagas' class='input-hvac' value='3' min='1' max='10' required>
+                    </div>
+                </div>
+                <button type='submit' class='btn-primary-hvac' style='width: auto; margin-top: 10px;'> Liberar Horário na Web</button>
+            </form>
+        </div>
+
+        <!-- Lista de Horários Cadastrados -->
+        <div class='card-tech'>
+            <h3> Seus Horários e Vagas Atuais</h3>
+            <table class='tech-table'>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Período</th>
+                        <th>Vagas / Agendados</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in disponibilidades %}
+                    <tr>
+                        <td><strong>{{ d[1] }}</strong></td>
+                        <td>{{ d[2] }}</td>
+                        <td>
+                            <b>{{ d[5] or 0 }}</b> de <b>{{ d[4] or 3 }}</b> agendamentos
+                        </td>
+                        <td>
+                            {% if (d[5] or 0) >= (d[4] or 3) %}
+                                <span class='status-badge badge-danger'>Lotado / Esgotado</span>
+                            {% else %}
+                                <span class='status-badge badge-success'>{{ (d[4] or 3) - (d[5] or 0) }} vaga(s) livre(s)</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href='/disponibilidade/remover/{{ d[0] }}' class='status-badge badge-danger' style='text-decoration: none;' onclick='return confirm("Deseja cancelar a disponibilidade deste dia?")'> Excluir</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan='5' style='text-align: center; color: #888; padding: 25px;'>
+                            Você ainda não liberou nenhum dia na agenda. Use o formulário acima!
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        document.getElementById('data_liberar').min = new Date().toISOString().split('T')[0];
+    </script>
+</body>
+</html>

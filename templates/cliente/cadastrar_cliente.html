@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Novo Cliente</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='header'>
+        <h1>Novo Cliente</h1>
+        <a href='/clientes' class='btn-voltar'>⬅ Voltar</a>
+    </div>
+    <div class='container'>
+        <form method='post' class='form-painel'>
+            <h3>Dados do Cliente</h3>
+            <label>Nome Completo:</label>
+            <input type='text' name='nome' required autofocus>
+
+            <label>Email:</label>
+            <input type='email' name='email'>
+
+            <label>Tipo de Pessoa:</label>
+            <select name='tipo'>
+                <option value='PF'>Fisica (CPF)</option>
+                <option value='PJ'>Juridica (CNPJ)</option>
+            </select>
+
+            <label>CPF ou CNPJ:</label>
+            <input type='text' name='documento'>
+
+            <label>Telefone / WhatsApp:</label>
+            <input type='text' name='telefone'>
+
+            <label>Endereco Completo:</label>
+            <input type='text' name='endereco'>
+
+            <label>Observacoes:</label>
+            <textarea name='observacoes'></textarea>
+
+            <label>Data da 1a Visita:</label>
+            <input type='date' name='data_visita_inicial'>
+
+            <label>Data Retorno Programado:</label>
+            <input type='date' name='data_retorno_programado'>
+
+            <button class='btn-salvar' type='submit'>Salvar Cliente</button>
+        </form>
+    </div>
+</body>
+</html>

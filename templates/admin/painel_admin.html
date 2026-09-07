@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head><meta charset='UTF-8'>
+<title>Admin Master - ClimaGestão</title>
+<link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+<div class='hvac-container' style='max-width: 1200px;'>
+    <header class='hvac-header'>
+        <a href='/painel' class='btn-back'> Meu Painel</a>
+        <h2> Painel do Criador (Admin Master)</h2>
+        <a href='/logout' class='btn-primary-hvac' style='background:#ef4444; width:auto;'> Sair</a>
+    </header>
+
+    <div class='dashboard-cards' style='display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom:20px;'>
+        <div class='dash-card' style='border-top-color:#10b981 !important; padding:20px; background:#fff; border-radius:10px; text-align:center;'>
+            <div style='font-size:2rem;'></div>
+            <h3>{{ total_assinantes }}</h3>
+            <p>Assinantes Ativos</p>
+        </div>
+        <div class='dash-card' style='border-top-color:#3b82f6 !important; padding:20px; background:#fff; border-radius:10px; text-align:center;'>
+            <div style='font-size:2rem;'></div>
+            <h3>R$ {{ "%.2f"|format(receita_estimada) }}</h3>
+            <p>Receita Mensal Estimada</p>
+        </div>
+        <div class='dash-card' style='border-top-color:#8b5cf6 !important; padding:20px; background:#fff; border-radius:10px; text-align:center;'>
+            <div style='font-size:2rem;'></div>
+            <h3>{{ total_videos }}</h3>
+            <p>Vídeos Publicados</p>
+        </div>
+    </div>
+
+    <div class='card-tech' style='margin-bottom:20px;'>
+        <h3> Todos os Assinantes</h3>
+        <table class='tech-table' style='font-size:0.85rem;'>
+            <thead><tr><th>Empresa</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Cadastro</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody>
+                {% for u in assinantes %}
+                <tr>
+                    <td><strong>{{ u[2] }}</strong></td>
+                    <td>{{ u[1] }}</td>
+                    <td>{{ u[3] }}</td>
+                    <td>{{ u[4] or '-' }}</td>
+                    <td>{{ u[8][:10] if u[8] else '' }}</td>
+                    <td>
+                        {% if u[7] == 1 %}
+                            <span class='status-badge badge-success'> Ativa</span>
+                        {% else %}
+                            <span class='status-badge badge-danger'> Bloqueada</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u[7] == 1 %}
+                        <a href='/admin/bloquear/{{ u[0] }}' class='status-badge badge-danger' style='text-decoration:none;'>Bloquear</a>
+                        {% else %}
+                        <a href='/admin/ativar/{{ u[0] }}' class='status-badge badge-success' style='text-decoration:none;'>Ativar</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class='card-tech'>
+        <h3> Gerenciar Vídeos e Cursos (apenas você vê aqui)</h3>
+        <form method='POST' action='/admin/videos/add' class='form-grid' style='margin-bottom:15px;'>
+            <div class='form-group' style='grid-column:span 2;'><label>Título:</label><input class='input-hvac' name='titulo' required></div>
+            <div class='form-group' style='grid-column:span 2;'><label>URL do Vídeo (YouTube):</label><input class='input-hvac' name='url_video' required placeholder='Pode colar o link completo do YouTube'></div>
+            <div class='form-group'><label>Categoria:</label><input class='input-hvac' name='categoria' value='Geral'></div>
+            <div class='form-group'><label>Ordem:</label><input class='input-hvac' type='number' name='ordem' value='0'></div>
+            <div class='form-group' style='grid-column:span 2;'><label>Descrição:</label><textarea class='input-hvac' name='descricao' rows='2'></textarea></div>
+            <button type='submit' class='btn-primary-hvac' style='width:auto;'> Publicar Vídeo</button>
+        </form>
+
+        <table class='tech-table'>
+            <thead><tr><th>Título</th><th>Categoria</th><th>URL</th><th>Ações</th></tr></thead>
+            <tbody>
+                {% for v in videos %}
+                <tr>
+                    <td>{{ v[1] }}</td>
+                    <td><span class='status-badge badge-info'>{{ v[4] }}</span></td>
+                    <td><small>{{ v[3][:50] }}...</small></td>
+                    <td><a href='/admin/videos/del/{{ v[0] }}' style='color:#ef4444;' onclick='return confirm("Remover?")'></a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body></html>

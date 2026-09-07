@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OS - ClimaGestao</title><link rel="stylesheet" href="/static/style.css">
+<style>
+body{margin:0;padding:20px;background:#f4f6f9;font-family:Segoe UI,sans-serif}
+.c{max-width:1100px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;box-shadow:0 4px 15px rgba(0,0,0,.06)}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid #f0f0f0}
+a.btn,button.btn{display:inline-block;padding:10px 16px;border-radius:8px;color:#fff;text-decoration:none;font-weight:600;border:0;cursor:pointer}
+.g{background:#6c757d}.v{background:#28a745}.p{background:#9b59b6}.b{background:#00a8ff}
+table{width:100%;border-collapse:collapse}th,td{padding:12px;border-bottom:1px solid #eee;text-align:left}
+th{background:#f8f9fa}.empty{text-align:center;padding:48px;color:#888}
+</style></head><body><div class="c">
+<div class="bar">
+  <a class="btn g" href="/painel">Painel</a>
+  <h2 style="margin:0;flex:1;text-align:center">Historico de Ordens de Servico (OS)</h2>
+  <div style="display:flex;gap:8px">
+    <a class="btn v" href="/servico/novo">+ Nova OS</a>
+    <a class="btn p" href="/orcamento/config">Precos & Servicos</a>
+  </div>
+</div>
+{% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}{% for c,m in messages %}<div style="padding:12px;margin-bottom:12px;border-radius:8px;background:#d1e7dd">{{ m }}</div>{% endfor %}{% endif %}{% endwith %}
+<table><thead><tr><th>Data</th><th>Cliente / Servico</th><th>Valor</th><th>Status</th><th>Acoes</th></tr></thead><tbody>
+{% if servicos and servicos|length > 0 %}
+{% for s in servicos %}
+<tr>
+<td>{{ s.data_sugerida or '-' }}</td>
+<td><b>{{ s.nome_cliente or '-' }}</b><br><span style="color:#666">{{ s.tipo_servico or '-' }}</span></td>
+<td>R$ {{ '%.2f'|format(s.valor or 0) }}</td>
+<td>{{ s.status_servico or s.status or 'Pendente' }}</td>
+<td>
+  <a class="btn" style="background:#ff9800;padding:6px 10px" href="/agendamento/editar/{{ s.id }}">Editar</a>
+  <a class="btn" style="background:#dc3545;padding:6px 10px" href="/agendamento/excluir/{{ s.id }}" onclick="return confirm('Apagar?')">Excluir</a>
+</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr><td colspan="5" class="empty">Nenhum servico registrado ainda.<br><br>
+<a class="btn b" href="/servico/novo">Cadastrar Primeira OS</a></td></tr>
+{% endif %}
+</tbody></table></div></body></html>

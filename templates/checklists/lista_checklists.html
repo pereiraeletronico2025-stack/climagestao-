@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Histórico Checklists</title>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='hvac-container'>
+        <header class='hvac-header'>
+            <a href='/' class='btn-back'> Painel</a>
+            <h2> Histórico de Checklists</h2>
+            <div style='display: flex; gap: 8px;'>
+                <a href='/checklists/tipos' class='btn-primary-hvac' style='width:auto; background: #8b5cf6;'> Tipos & Itens</a>
+                <a href='/checklists/novo' class='btn-primary-hvac' style='width:auto;'> Novo</a>
+            </div>
+        </header>
+        <div class='card-tech'>
+            <table class='tech-table'>
+                <thead><tr><th>Data</th><th>Tipo</th><th>Cliente</th><th>Aparelho</th></tr></thead>
+                <tbody>
+                    {% for c in checklists %}
+                    <tr>
+                        <td>{{ c[2] }}</td>
+                        <td>{{ c[1] }}</td>
+                        <td>{{ c[3] or 'Sem cliente' }}</td>
+                        <td>{{ c[4] or '-' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan='4' style='text-align:center; padding:20px; color:#888;'>Nenhum checklist registrado ainda.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Tabela de Preços & Serviços - {{ config.nome_empresa }}</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='hvac-container' style='max-width: 1000px;'>
+        <header class='hvac-header'>
+            <a href='/servicos' class='btn-back'> Voltar para Serviços</a>
+            <h2> Tabela de Preços & Equipamentos</h2>
+        </header>
+
+        <div class='form-grid'>
+            <!-- CATÁLOGO DE SERVIÇOS & PREÇOS -->
+            <div class='card-tech'>
+                <h3 style='color: #00A6FF; margin-top: 0;'> Serviços & Preços Padrão</h3>
+                <p style='color: #64748b; font-size: 0.85rem;'>Cadastre os serviços oferecidos e os valores cobrados.</p>
+
+                <form action='/catalogos/servico/add' method='POST' style='margin-bottom: 20px;'>
+                    <div class='form-group'>
+                        <label>Nome do Serviço:</label>
+                        <input type='text' name='nome' class='input-hvac' placeholder='Ex: Limpeza de Turbina' required>
+                    </div>
+                    <div class='form-group'>
+                        <label>Preço Base / Mão de Obra (R$):</label>
+                        <input type='number' step='0.01' name='valor' class='input-hvac' placeholder='150.00' required>
+                    </div>
+                    <button type='submit' class='btn-primary-hvac' style='width: 100%; margin-top: 8px;'> Adicionar Serviço</button>
+                </form>
+
+                <table class='tech-table' style='font-size: 0.9rem;'>
+                    <thead>
+                        <tr>
+                            <th>Serviço</th>
+                            <th>Preço Base</th>
+                            <th style='text-align: center;'>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in servicos %}
+                        <tr>
+                            <td><strong>{{ s[1] }}</strong></td>
+                            <td><b style='color: #10b981;'>R$ {{ "%.2f"|format(s[2]|float) }}</b></td>
+                            <td style='text-align: center;'>
+                                <a href='/catalogos/servico/del/{{ s[0] }}' class='status-badge badge-danger' style='text-decoration: none;' onclick='return confirm("Excluir este serviço da tabela?")'> Excluir</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan='3' style='text-align: center; color: #888;'>Nenhum serviço cadastrado.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CATÁLOGO DE EQUIPAMENTOS -->
+            <div class='card-tech'>
+                <h3 style='color: #00A6FF; margin-top: 0;'> Equipamentos Atendidos</h3>
+                <p style='color: #64748b; font-size: 0.85rem;'>Cadastre os tipos de aparelhos com os quais trabalha.</p>
+
+                <form action='/catalogos/equipamento/add' method='POST' style='margin-bottom: 20px;'>
+                    <div class='form-group'>
+                        <label>Tipo / Marca do Equipamento:</label>
+                        <input type='text' name='nome' class='input-hvac' placeholder='Ex: Split Piso Teto 60k BTU' required>
+                    </div>
+                    <button type='submit' class='btn-primary-hvac' style='width: 100%; margin-top: 8px;'> Adicionar Equipamento</button>
+                </form>
+
+                <table class='tech-table' style='font-size: 0.9rem;'>
+                    <thead>
+                        <tr>
+                            <th>Equipamento</th>
+                            <th style='text-align: center;'>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in equipamentos %}
+                        <tr>
+                            <td><strong>{{ e[1] }}</strong></td>
+                            <td style='text-align: center;'>
+                                <a href='/catalogos/equipamento/del/{{ e[0] }}' class='status-badge badge-danger' style='text-decoration: none;' onclick='return confirm("Excluir este equipamento?")'> Excluir</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan='2' style='text-align: center; color: #888;'>Nenhum equipamento cadastrado.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

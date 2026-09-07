@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang='pt-br'><head><meta charset='UTF-8'>
+<title>Cadastro - ClimaGestão</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+body { background: linear-gradient(135deg, #0b1329, #152243); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; color: #fff; }
+.auth-card { background: #152243; padding: 35px; border-radius: 15px; max-width: 420px; width: 100%; border: 1px solid #223767; box-shadow: 0 15px 40px rgba(0,0,0,0.4); }
+.auth-card h1 { text-align: center; color: #00A6FF; margin-bottom: 8px; font-size: 1.8rem; }
+.auth-card .subtitle { text-align: center; color: #94a3b8; margin-bottom: 25px; font-size: 0.9rem; }
+.form-row { margin-bottom: 15px; }
+.form-row label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 5px; font-weight: 600; }
+.form-row input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #223767; background: #0b1329; color: #fff; font-size: 1rem; }
+.form-row input:focus { border-color: #00A6FF; outline: none; }
+.btn-primary { width: 100%; padding: 14px; background: #00A6FF; color: #fff; border: none; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+.btn-primary:hover { background: #0088cc; }
+.links { text-align: center; margin-top: 20px; font-size: 0.9rem; }
+.links a { color: #00A6FF; text-decoration: none; }
+.msg-erro { background: #fee2e2; color: #b91c1c; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9rem; }
+.msg-ok { background: #dcfce7; color: #15803d; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9rem; }
+</style>
+</head><body>
+<div class='auth-card'>
+    <h1> Nova Conta</h1>
+    <p class='subtitle'>Assinatura R$ 59,90/mês</p>
+    {% if erro %}<div class='msg-erro'>{{ erro }}</div>{% endif %}
+    <form method='POST'>
+        <div class='form-row'><label>Nome Completo:</label><input type='text' name='nome_completo' required></div>
+        <div class='form-row'><label>Nome da Empresa:</label><input type='text' name='empresa' required></div>
+        <div class='form-row'><label>Email:</label><input type='email' name='email' required></div>
+        <div class='form-row'><label>Telefone/WhatsApp:</label><input type='tel' name='telefone' required></div>
+        <div class='form-row'><label>Crie uma Senha:</label><input type='password' name='senha' required minlength='6'></div>
+        <button type='submit' class='btn-primary'>Criar Conta e Entrar</button>
+    </form>
+    <div class='links'><a href='/login'>Já tenho conta</a></div>
+</div></body></html>

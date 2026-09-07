@@ -1,0 +1,99 @@
+﻿<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Relatorios Gerais</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='header'>
+        <h1>📊 Relatorios Gerais</h1>
+        <a href='/' class='btn-voltar'>⬅ Painel</a>
+    </div>
+
+    <div class='container'>
+        <!-- 1. RELATORIO DE COMISSOES DE FUNCIONARIOS -->
+        <div class='tabela-container' style='margin-bottom: 25px;'>
+            <h3 style='color: #1e5bb8; margin-bottom: 12px;'>🧑‍🔧 Relatorio de Comissoes e Producao por Funcionario</h3>
+            <table>
+                <tr>
+                    <th>Funcionario</th>
+                    <th>Cargo</th>
+                    <th>Salario Fixo</th>
+                    <th>% Comissao</th>
+                    <th>Total Produzido</th>
+                    <th>Comissao a Pagar</th>
+                    <th>Salario Total Estimado</th>
+                </tr>
+                {% for f in relatorio_funcionarios %}
+                <tr>
+                    <td><strong>{{ f['nome'] }}</strong></td>
+                    <td>{{ f['cargo'] }}</td>
+                    <td>R$ {{ "%.2f"|format(f['salario_base']) }}</td>
+                    <td>{{ f['comissao_percentual'] }}%</td>
+                    <td>R$ {{ "%.2f"|format(f['total_produzido']) }}</td>
+                    <td style='color: #28a745; font-weight: bold;'>R$ {{ "%.2f"|format(f['total_comissao']) }}</td>
+                    <td style='color: #1e5bb8; font-weight: bold; font-size: 1.05em;'>R$ {{ "%.2f"|format(f['salario_final']) }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% if relatorio_funcionarios|length == 0 %}
+                <p style='padding: 10px; color: #888;'>Cadastre funcionarios para calcular comissoes.</p>
+            {% endif %}
+        </div>
+
+        <!-- 2. CLIENTES COM RETORNO / MANUTENCAO PROGRAMADA -->
+        <div class='tabela-container' style='margin-bottom: 25px;'>
+            <h3 style='color: #ff9800; margin-bottom: 12px;'>📅 Proximos Retornos e Higienizacoes Agendadas</h3>
+            <table>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Telefone / WhatsApp</th>
+                    <th>Endereco</th>
+                    <th>Data Retorno</th>
+                    <th>Observacoes</th>
+                </tr>
+                {% for c in proximos_retornos %}
+                <tr>
+                    <td><strong>{{ c[1] }}</strong></td>
+                    <td>{{ c[5] or '-' }}</td>
+                    <td>{{ c[6] or '-' }}</td>
+                    <td style='color: #d9534f; font-weight: bold;'>{{ c[9] }}</td>
+                    <td>{{ c[7] or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% if proximos_retornos|length == 0 %}
+                <p style='padding: 10px; color: #888;'>Nenhum retorno agendado no momento.</p>
+            {% endif %}
+        </div>
+
+        <!-- 3. ALERTA DE ESTOQUE BAIXO -->
+        <div class='tabela-container'>
+            <h3 style='color: #d9534f; margin-bottom: 12px;'>⚠️ Alerta: Produtos com Estoque Baixo (<= 3 unidades)</h3>
+            <table>
+                <tr>
+                    <th>Cod. Barras</th>
+                    <th>Produto / Material</th>
+                    <th>Unidade</th>
+                    <th>Preco Venda</th>
+                    <th>Qtd Restante</th>
+                </tr>
+                {% for p in estoque_baixo %}
+                <tr>
+                    <td>{{ p[1] or '-' }}</td>
+                    <td><strong>{{ p[2] }}</strong></td>
+                    <td>{{ p[4] }}</td>
+                    <td>R$ {{ "%.2f"|format(p[6]) }}</td>
+                    <td style='color: #d9534f; font-weight: bold; font-size: 1.1em;'>{{ p[7] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% if estoque_baixo|length == 0 %}
+                <p style='padding: 10px; color: #2e7d32; font-weight: bold;'>✅ Todo o estoque esta em niveis normais.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Editar Aparelho</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href='/static/style.css'>
+</head>
+<body>
+    <div class='header'>
+        <h1>Editar Aparelho #{{ aparelho[0] }}</h1>
+        <a href='/aparelhos' class='btn-voltar'>⬅ Voltar</a>
+    </div>
+    <div class='container'>
+        <form method='post' class='form-painel'>
+            <h3>Atualizar Dados do Aparelho</h3>
+            <label>Cliente Dono:</label>
+            <select name='cliente_id' required>
+                {% for c in clientes %}
+                    <option value='{{ c[0] }}' {% if c[0] == aparelho[1] %}selected{% endif %}>{{ c[1] }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Marca:</label>
+            <input type='text' name='marca' value='{{ aparelho[2] }}' required>
+
+            <label>Modelo:</label>
+            <input type='text' name='modelo' value='{{ aparelho[3] or "" }}'>
+
+            <label>Capacidade (BTU):</label>
+            <input type='text' name='capacidade_btu' value='{{ aparelho[4] or "" }}'>
+
+            <label>Voltagem:</label>
+            <select name='voltagem'>
+                <option value='220V' {% if aparelho[5] == '220V' %}selected{% endif %}>220V</option>
+                <option value='110V' {% if aparelho[5] == '110V' %}selected{% endif %}>110V</option>
+                <option value='Bivolt' {% if aparelho[5] == 'Bivolt' %}selected{% endif %}>Bivolt</option>
+                <option value='Trifasico' {% if aparelho[5] == 'Trifasico' %}selected{% endif %}>Trifasico 380V</option>
+            </select>
+
+            <label>Local Instalado:</label>
+            <input type='text' name='local_instalado' value='{{ aparelho[6] or "" }}'>
+
+            <label>Data de Instalacao:</label>
+            <input type='date' name='data_instalacao' value='{{ aparelho[7] or "" }}'>
+
+            <label>Observacoes:</label>
+            <textarea name='observacoes'>{{ aparelho[8] or "" }}</textarea>
+
+            <button class='btn-salvar' type='submit'>Salvar Alteracoes</button>
+        </form>
+    </div>
+</body>
+</html>
