@@ -2271,3 +2271,77 @@ def disparar_fechamento_telegram_manual():
     except Exception as e:
         flash(f"Erro ao disparar fechamento: {str(e)}", "danger")
         return redirect('/painel')
+
+
+# =========================================================================
+# ROTAS: MEU DIA DO TÉCNICO (PAINEL MOBILE ENXUTO)
+# =========================================================================
+@app.route('/meu-dia')
+@app.route('/meudia')
+@app.route('/tecnico')
+def painel_meu_dia():
+    try:
+        hoje_iso = datetime.now().strftime('%Y-%m-%d')
+        hoje_br = datetime.now().strftime('%d/%m/%Y')
+        data_formatada = datetime.now().strftime('%A, %d de %B').capitalize()
+
+        conn = sqlite3.connect('app.db')
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+
+        # Busca Ordens de Servico marcadas para hoje
+        c.execute("""
+            SELECT * FROM AgendamentoOnline 
+            WHERE (data_sugerida LIKE ? OR data_sugerida LIKE ?) AND etapa_fluxo != 'Cancelado'
+            ORDER BY CASE WHEN etapa_fluxo = 'Concluído' THEN 2 ELSE 1 END, id ASC;
+        """, (f"{hoje_iso}%", f"{hoje_br}%"))
+        rows = c.fetchall()
+        conn.close()
+
+        os_lista = []
+        total_concluidas = 0
+        for r in rows:
+            d = dict(r)
+            d['telefone_limpo'] = re.sub(r'\D', '', str(d.get('telefone') or ''))
+            if d.get('etapa_fluxo') == 'Concluído' or d.get('status') == 'Concluído':
+                total_concluidas += 1
+            os_lista.append(d)
+
+        return render_template('meu_dia.html', 
+                               os_lista=os_lista, 
+                               total_os=len(os_lista), 
+                               total_concluidas=total_concluidas,
+                               data_hoje_formatada=data_formatada)
+    except Exception as e:
+        return f"Erro ao carregar Meu Dia: {str(e)}", 500
+
+
+@app.route('/meudia/salvar/<int:id>', methods=['POST'])
+def meudia_salvar_execucao(id):
+    try:
+        dados = request.get_json() or {}
+        foto_antes = dados.get('foto_antes')
+        foto_depois = dados.get('foto_depois')
+        assinatura = dados.get('assinatura')
+        data_hoje = datetime.now().strftime('%Y-%m-%d %H:%M')
+
+        conn = sqlite3.connect('app.db')
+        c = conn.cursor()
+
+        # Atualiza em AgendamentoOnline
+        c.execute("""
+            UPDATE AgendamentoOnline 
+            SET etapa_fluxo = 'Concluído', 
+                status = 'Concluído',
+                data_conclusao = ?,
+                foto_antes = COALESCE(NULLIF(?, ''), foto_antes),
+                foto_depois = COALESCE(NULLIF(?, ''), foto_depois),
+                assinatura_cliente = COALESCE(NULLIF(?, ''), assinatura_cliente)
+            WHERE id = ?
+        """, (data_hoje, foto_antes, foto_depois, assinatura, id))
+
+        conn.commit()
+        conn.close()
+        return jsonify({'sucesso': True})
+    except Exception as e:
+        return jsonify({'sucesso': False, 'erro': str(e)}), 500

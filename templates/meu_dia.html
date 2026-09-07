@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Meu Dia | ClimaGestão Técnico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding-bottom: 75px;
+            color: #0f172a;
+        }
+        .app-header {
+            background: linear-gradient(135deg, #0f172a 0%, #0369a1 100%);
+            color: white;
+            padding: 18px 16px;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .os-card {
+            background: white;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: transform 0.15s;
+        }
+        .os-card.concluido {
+            border-left: 6px solid #10b981;
+            opacity: 0.85;
+        }
+        .os-card.pendente {
+            border-left: 6px solid #0284c7;
+        }
+        .quick-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-decoration: none;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 1030;
+            box-shadow: 0 -3px 10px rgba(0,0,0,0.05);
+        }
+        .bottom-nav a {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.75rem;
+            text-align: center;
+        }
+        .bottom-nav a.active {
+            color: #0284c7;
+            font-weight: bold;
+        }
+        .bottom-nav i {
+            font-size: 1.25rem;
+            display: block;
+            margin-bottom: 2px;
+        }
+        #canvas-sign {
+            border: 2px dashed #94a3b8;
+            border-radius: 8px;
+            touch-action: none;
+            background: #fff;
+            width: 100%;
+            height: 120px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- CABEÇALHO DO APLICATIVO -->
+    <div class="app-header mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="fw-bold mb-0"><i class="fa fa-snowflake me-1 text-info"></i> Meu Dia</h5>
+                <small class="opacity-75">{{ data_hoje_formatada }}</small>
+            </div>
+            <span class="badge bg-light text-dark px-3 py-2 fw-bold">
+                {{ total_concluidas }}/{{ total_os }} Concluídas
+            </span>
+        </div>
+    </div>
+
+    <!-- LISTAGEM DE ORDENS DO DIA -->
+    <div class="container px-3">
+        {% if os_lista %}
+            {% for os in os_lista %}
+            <div class="os-card {{ 'concluido' if os.etapa_fluxo == 'Concluído' or os.status == 'Concluído' else 'pendente' }} p-3">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary fw-bold">OS #{{ os.id }}</span>
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary ms-1">{{ os.periodo or 'Turno Livre' }}</span>
+                    </div>
+                    {% if os.etapa_fluxo == 'Concluído' or os.status == 'Concluído' %}
+                        <span class="badge bg-success"><i class="fa fa-check-circle me-1"></i> Concluído</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">{{ os.etapa_fluxo or 'A Executar' }}</span>
+                    {% endif %}
+                </div>
+
+                <h6 class="fw-bold text-dark mb-1">{{ os.nome_cliente or os.cliente_nome or 'Cliente' }}</h6>
+                <div class="small text-muted mb-2"><i class="fa fa-wrench me-1 text-primary"></i>{{ os.tipo_servico or os.descricao or 'Serviço HVAC' }}</div>
+                
+                {% if os.endereco %}
+                <div class="small text-secondary mb-3 bg-light p-2 rounded">
+                    <i class="fa fa-location-dot text-danger me-1"></i> {{ os.endereco }}
+                </div>
+                {% endif %}
+
+                <!-- BOTÕES DE AÇÃO RÁPIDA -->
+                <div class="row g-2">
+                    {% if os.endereco %}
+                    <div class="col-4">
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ os.endereco|urlencode }}" target="_blank" class="quick-btn bg-danger bg-opacity-10 text-danger">
+                            <i class="fa fa-map-location-dot"></i> GPS
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if os.telefone %}
+                    <div class="col-4">
+                        <a href="https://api.whatsapp.com/send?phone=55{{ os.telefone_limpo }}" target="_blank" class="quick-btn bg-success bg-opacity-10 text-success">
+                            <i class="fab fa-whatsapp"></i> Zap
+                        </a>
+                    </div>
+                    {% endif %}
+                    <div class="col-{{ '4' if os.endereco and os.telefone else '12' }}">
+                        <button type="button" class="quick-btn btn-primary text-white w-100 border-0" onclick="abrirExecucaoModal({{ os.id }}, '{{ os.nome_cliente }}', '{{ os.token_publico }}')">
+                            <i class="fa fa-camera"></i> Finalizar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- LINK DO LAUDO SE JÁ GERADO -->
+                <div class="mt-2 pt-2 border-top text-end">
+                    <a href="/servico/{{ os.id }}/laudo" class="small text-decoration-none fw-bold text-primary">
+                        <i class="fa fa-file-pdf me-1"></i> Abrir Laudo Técnico
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="fa fa-calendar-day fa-3x mb-3 opacity-25"></i>
+                <h6>Nenhuma ordem agendada para hoje!</h6>
+                <p class="small">Aproveite para revisar ferramentas ou orçamentos pendentes.</p>
+                <a href="/fluxo" class="btn btn-primary btn-sm mt-2"><i class="fa fa-stream me-1"></i> Abrir Esteira Kanban</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- MODAL DE EXECUÇÃO / FOTOS / ASSINATURA -->
+    <div class="modal fade" id="modalExecutar" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h6 class="modal-title fw-bold" id="modalTitulo">Finalizar Atendimento</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <input type="hidden" id="osIdAtual">
+                    
+                    <!-- FOTO ANTES -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold"><i class="fa fa-camera me-1"></i> Foto de ANTES (Evidência Inicial)</label>
+                        <input type="file" id="inputFotoAntes" accept="image/*" capture="environment" class="form-control form-control-sm" onchange="previewImagem(this, 'previewAntes')">
+                        <img id="previewAntes" class="img-fluid rounded mt-2 d-none" style="max-height: 120px;">
+                    </div>
+
+                    <!-- FOTO DEPOIS -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold"><i class="fa fa-camera-retro me-1"></i> Foto de DEPOIS (Serviço Concluído)</label>
+                        <input type="file" id="inputFotoDepois" accept="image/*" capture="environment" class="form-control form-control-sm" onchange="previewImagem(this, 'previewDepois')">
+                        <img id="previewDepois" class="img-fluid rounded mt-2 d-none" style="max-height: 120px;">
+                    </div>
+
+                    <!-- ASSINATURA CLIENTE -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold"><i class="fa fa-pen me-1"></i> Assinatura do Cliente na Tela</label>
+                        <canvas id="canvas-sign"></canvas>
+                        <button type="button" class="btn btn-outline-secondary btn-sm mt-1" onclick="limparSign()"><i class="fa fa-eraser"></i> Limpar Assinatura</button>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light p-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-success btn-sm fw-bold" onclick="salvarExecucao()"><i class="fa fa-check me-1"></i> Salvar e Concluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MENU INFERIOR MOBILE -->
+    <div class="bottom-nav">
+        <a href="/meu-dia" class="active">
+            <i class="fa fa-calendar-check"></i>
+            <span>Meu Dia</span>
+        </a>
+        <a href="/fluxo">
+            <i class="fa fa-stream"></i>
+            <span>Esteira</span>
+        </a>
+        <a href="/clientes">
+            <i class="fa fa-users"></i>
+            <span>Clientes</span>
+        </a>
+        <a href="/painel">
+            <i class="fa fa-home"></i>
+            <span>Painel</span>
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let fotoAntesB64 = '';
+        let fotoDepoisB64 = '';
+        const modalExec = new bootstrap.Modal(document.getElementById('modalExecutar'));
+        const canvas = document.getElementById('canvas-sign');
+        const ctx = canvas.getContext('2d');
+        let desenhando = false;
+
+        function redimensionarCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#0f172a';
+        }
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        canvas.addEventListener('mousedown', (e) => { desenhando = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+        canvas.addEventListener('mousemove', (e) => { if(desenhando) { const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); } });
+        window.addEventListener('mouseup', () => { desenhando = false; });
+
+        canvas.addEventListener('touchstart', (e) => { desenhando = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }, {passive:false});
+        canvas.addEventListener('touchmove', (e) => { if(desenhando) { const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); } e.preventDefault(); }, {passive:false});
+        window.addEventListener('touchend', () => { desenhando = false; });
+
+        function limparSign() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+        function previewImagem(input, imgId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById(imgId);
+                    img.src = e.target.result;
+                    img.classList.remove('d-none');
+                    if (imgId === 'previewAntes') fotoAntesB64 = e.target.result;
+                    if (imgId === 'previewDepois') fotoDepoisB64 = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function abrirExecucaoModal(id, nome) {
+            document.getElementById('osIdAtual').value = id;
+            document.getElementById('modalTitulo').innerText = `Finalizar OS #${id} - ${nome}`;
+            fotoAntesB64 = ''; fotoDepoisB64 = '';
+            document.getElementById('previewAntes').classList.add('d-none');
+            document.getElementById('previewDepois').classList.add('d-none');
+            modalExec.show();
+            setTimeout(redimensionarCanvas, 350);
+        }
+
+        function salvarExecucao() {
+            const osId = document.getElementById('osIdAtual').value;
+            const signB64 = canvas.toDataURL('image/png');
+            
+            fetch(`/meudia/salvar/${osId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    foto_antes: fotoAntesB64,
+                    foto_depois: fotoDepoisB64,
+                    assinatura: signB64
+                })
+            }).then(r => r.json()).then(res => {
+                if (res.sucesso) {
+                    alert('Atendimento finalizado com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro ao salvar: ' + (res.erro || 'Erro desconhecido'));
+                }
+            });
+        }
+    </script>
+</body>
+</html>
