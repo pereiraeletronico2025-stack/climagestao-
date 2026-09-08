@@ -1459,10 +1459,34 @@ def telegram_testar():
 @app.route('/admin')
 @admin_required
 def painel_admin():
-    conn = get_db()
-    usuarios = conn.execute("SELECT * FROM Usuario ORDER BY id DESC").fetchall()
-    conn.close()
-    return render_template('admin/painel_admin.html', usuarios=usuarios)
+    try:
+        conn = sqlite3.connect(DB_PATH if 'DB_PATH' in globals() else 'app.db')
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+
+        # Busca lista de usuarios
+        c.execute("SELECT * FROM Usuario ORDER BY id DESC;")
+        usuarios_raw = c.fetchall()
+        usuarios = [dict(u) for r in [usuarios_raw] for u in r]
+
+        # M?tricas para o Painel do Criador/Admin
+        total_usuarios = len(usuarios)
+        assinantes_ativos = sum(1 for u in usuarios if u.get('assinatura_ativa') or u.get('is_admin'))
+        valor_mensalidade = 59.90
+        receita_estimada = assinantes_ativos * valor_mensalidade
+
+        conn.close()
+
+        return render_template(
+            'admin/painel_admin.html',
+            usuarios=usuarios,
+            total_usuarios=total_usuarios,
+            assinantes_ativos=assinantes_ativos,
+            receita_estimada=receita_estimada,
+            valor_mensalidade=valor_mensalidade
+        )
+    except Exception as e:
+        return f"Erro no painel admin: {str(e)}", 500
 
 def _iniciar_telegram_background():
     t = threading.Thread(target=_telegram_bot_loop, daemon=True)
