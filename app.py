@@ -1456,6 +1456,9 @@ def telegram_testar():
         flash(f"Falha ao enviar mensagem de teste: {msg}", "danger")
     return redirect(url_for('telegram_config_view'))
 
+# =========================================================================
+# ROTAS: PAINEL DO CRIADOR / ADMIN MASTER & GESTÃO DE VÍDEOS
+# =========================================================================
 @app.route('/admin')
 @admin_required
 def painel_admin():
@@ -1464,189 +1467,77 @@ def painel_admin():
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
 
-        # Busca lista de usuarios
+        # Busca usuarios
         c.execute("SELECT * FROM Usuario ORDER BY id DESC;")
-        usuarios_raw = c.fetchall()
-        usuarios = [dict(u) for r in [usuarios_raw] for u in r]
+        usuarios = [dict(u) for u in c.fetchall()]
 
-        # M?tricas para o Painel do Criador/Admin
+        # Busca videos
+        c.execute("SELECT * FROM VideoCurso ORDER BY ordem ASC, id DESC;")
+        videos = [dict(v) for v in c.fetchall()]
+
         total_usuarios = len(usuarios)
         assinantes_ativos = sum(1 for u in usuarios if u.get('assinatura_ativa') or u.get('is_admin'))
+        total_assinantes = assinantes_ativos if assinantes_ativos > 0 else total_usuarios
         valor_mensalidade = 59.90
-        receita_estimada = assinantes_ativos * valor_mensalidade
+        receita_estimada = total_assinantes * valor_mensalidade
+        total_videos = len(videos)
 
         conn.close()
 
         return render_template(
             'admin/painel_admin.html',
             usuarios=usuarios,
+            videos=videos,
             total_usuarios=total_usuarios,
-            assinantes_ativos=assinantes_ativos,
+            assinantes_ativos=total_assinantes,
+            total_assinantes=total_assinantes,
             receita_estimada=receita_estimada,
+            total_videos=total_videos,
             valor_mensalidade=valor_mensalidade
         )
     except Exception as e:
         return f"Erro no painel admin: {str(e)}", 500
 
-def _iniciar_telegram_background():
-    t = threading.Thread(target=_telegram_bot_loop, daemon=True)
-    t.start()
-    print("[Telegram] Bot iniciado em segundo plano com sucesso.")
 
-@app.route('/catalogo/servico/editar/<int:id>', methods=['POST'])
-@app.route('/catalogo/servico/editar/<id>', methods=['POST'])
-@login_required
-def editar_cat_servico(id):
-    try: id = int(id)
-    except: return redirect(url_for('config_orcamento'))
-    nome = request.form.get('nome', '').strip()
-    try: val = float(str(request.form.get('valor_padrao', 0)).replace(',', '.'))
-    except: val = 0.0
-    conn = get_db()
-    conn.execute("UPDATE CatServico SET nome=?, valor_padrao=? WHERE id=?", (nome, val, id))
-    conn.commit()
-    conn.close()
-    flash("Serviço atualizado!", "success")
-    return redirect(url_for('config_orcamento'))
+@app.route('/admin/video/novo', methods=['POST'])
+@admin_required
+def admin_video_novo():
+    try:
+        titulo = request.form.get('titulo')
+        url_video = request.form.get('url_video')
+        categoria = request.form.get('categoria') or 'Geral'
+        ordem = int(request.form.get('ordem') or 0)
+        descricao = request.form.get('descricao')
+        data_criacao = datetime.now().strftime('%Y-%m-%d')
 
-@app.route('/catalogo/servico/excluir/<int:id>')
-@app.route('/catalogo/servico/excluir/<id>')
-@login_required
-def excluir_cat_servico(id):
-    try: id = int(id)
-    except: return redirect(url_for('config_orcamento'))
-    conn = get_db()
-    conn.execute("DELETE FROM CatServico WHERE id=?", (id,))
-    conn.commit()
-    conn.close()
-    flash("Serviço excluído!", "info")
-    return redirect(url_for('config_orcamento'))
-
-@app.route('/catalogo/equipamento/editar/<int:id>', methods=['POST'])
-@app.route('/catalogo/equipamento/editar/<id>', methods=['POST'])
-@login_required
-def editar_cat_equipamento(id):
-    try: id = int(id)
-    except: return redirect(url_for('config_orcamento'))
-    nome = request.form.get('nome', '').strip()
-    conn = get_db()
-    conn.execute("UPDATE CatEquipamento SET nome=? WHERE id=?", (nome, id))
-    conn.commit()
-    conn.close()
-    flash("Equipamento atualizado!", "success")
-    return redirect(url_for('config_orcamento'))
-
-@app.route('/catalogo/equipamento/excluir/<int:id>')
-@app.route('/catalogo/equipamento/excluir/<id>')
-@login_required
-def excluir_cat_equipamento(id):
-    try: id = int(id)
-    except: return redirect(url_for('config_orcamento'))
-    conn = get_db()
-    conn.execute("DELETE FROM CatEquipamento WHERE id=?", (id,))
-    conn.commit()
-    conn.close()
-    flash("Equipamento excluído!", "info")
-    return redirect(url_for('config_orcamento'))
-
-
-# === OS / SERVICOS (bloco unico, endpoints explicitos) ===
-
-
-@app.route('/caixa', methods=['GET', 'POST'])
-@app.route('/caixa-diario', methods=['GET', 'POST'])
-@login_required
-def caixa():
-    conn = get_db()
-    if request.method == 'POST':
-        data_mov = request.form.get('data') or date.today().isoformat()
-        tipo = request.form.get('tipo', 'Entrada')
-        categoria = request.form.get('categoria', 'Geral')
-        descricao = request.form.get('descricao', '')
-        try:
-            valor = float(request.form.get('valor', 0) or 0)
-        except Exception:
-            valor = 0.0
-        forma = request.form.get('forma_pagamento', 'Dinheiro')
-        conn.execute(
-            "INSERT INTO Caixa (data, tipo, categoria, descricao, valor, forma_pagamento) VALUES (?,?,?,?,?,?)",
-            (data_mov, tipo, categoria, descricao, valor, forma)
-        )
+        conn = sqlite3.connect(DB_PATH if 'DB_PATH' in globals() else 'app.db')
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO VideoCurso (titulo, url_video, categoria, ordem, descricao, ativo, data_criacao)
+            VALUES (?, ?, ?, ?, ?, 1, ?)
+        """, (titulo, url_video, categoria, ordem, descricao, data_criacao))
         conn.commit()
         conn.close()
-        flash('Movimentacao registrada!', 'success')
-        return redirect(url_for('caixa', data=data_mov))
-    data_selecionada = request.args.get('data') or date.today().isoformat()
-    mes_selecionado = request.args.get('mes') or date.today().strftime('%Y-%m')
-    try:
-        lancamentos = conn.execute("SELECT * FROM Caixa WHERE data=? ORDER BY id DESC", (data_selecionada,)).fetchall()
-    except Exception:
-        lancamentos = []
-    total_entradas = sum((l['valor'] or 0) for l in lancamentos if (l['tipo'] or '') == 'Entrada')
-    total_saidas = sum((l['valor'] or 0) for l in lancamentos if (l['tipo'] or '') in ('Saida', 'Saida'))
-    # aceita Saida sem acento e com
-    total_saidas = sum((l['valor'] or 0) for l in lancamentos if str(l['tipo'] or '').startswith('Said'))
-    saldo = total_entradas - total_saidas
-    saldo_dia = saldo
-    conn.close()
-    return render_template(
-        'financeiro/caixa.html',
-        lancamentos=lancamentos,
-        total_entradas=total_entradas,
-        total_saidas=total_saidas,
-        saldo=saldo,
-        saldo_dia=saldo_dia,
-        entradas_hoje=total_entradas,
-        saidas_hoje=total_saidas,
-        data_selecionada=data_selecionada,
-        m=mes_selecionado,
-        mes=mes_selecionado
-    )
 
-@app.route('/caixa/excluir/<int:id>')
-@app.route('/caixa/excluir/<id>')
-@login_required
-def excluir_caixa(id):
-    try:
-        id = int(id)
-    except Exception:
-        return redirect(url_for('caixa'))
-    conn = get_db()
-    conn.execute("DELETE FROM Caixa WHERE id=?", (id,))
-    conn.commit()
-    conn.close()
-    flash('Lancamento excluido.', 'info')
-    return redirect(url_for('caixa'))
+        flash("Vídeo publicado com sucesso!", "success")
+        return redirect('/admin')
+    except Exception as e:
+        return f"Erro ao cadastrar vídeo: {str(e)}", 500
 
-@app.route('/faturamento')
-@app.route('/faturamento-mensal')
-@login_required
-def faturamento():
-    conn = get_db()
-    mes_atual = request.args.get('mes') or date.today().strftime('%Y-%m')
-    try:
-        lancamentos = conn.execute("SELECT * FROM Caixa WHERE data LIKE ? ORDER BY data ASC", (mes_atual + '%',)).fetchall()
-    except Exception:
-        lancamentos = []
-    total_entradas = sum((l['valor'] or 0) for l in lancamentos if (l['tipo'] or '') == 'Entrada')
-    total_saidas = sum((l['valor'] or 0) for l in lancamentos if str(l['tipo'] or '').startswith('Said'))
-    conn.close()
-    return render_template(
-        'financeiro/faturamento.html',
-        lancamentos=lancamentos,
-        total_entradas=total_entradas,
-        total_saidas=total_saidas,
-        faturamento_mes=total_entradas,
-        despesas_mes=total_saidas,
-        lucro_mes=total_entradas - total_saidas,
-        mes=mes_atual
-    )
 
-@app.route('/relatorios')
-@login_required
-def relatorios():
-    if os.path.exists('templates/financeiro/relatorios.html'):
-        return render_template('financeiro/relatorios.html')
+@app.route('/admin/video/excluir/<int:id>')
+@admin_required
+def admin_video_excluir(id):
+    try:
+        conn = sqlite3.connect(DB_PATH if 'DB_PATH' in globals() else 'app.db')
+        c = conn.cursor()
+        c.execute("DELETE FROM VideoCurso WHERE id = ?", (id,))
+        conn.commit()
+        conn.close()
+        flash("Vídeo removido com sucesso!", "info")
+        return redirect('/admin')
+    except Exception as e:
+        return f"Erro ao excluir vídeo: {str(e)}", 500
     return redirect(url_for('faturamento'))
 
 
