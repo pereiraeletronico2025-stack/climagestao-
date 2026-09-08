@@ -2232,65 +2232,72 @@ def painel_admin():
     try:
         dbfile = DB_PATH if "DB_PATH" in globals() else "app.db"
         conn = sqlite3.connect(dbfile)
-        conn.row_factory = sqlite3.Row
         c = conn.cursor()
 
-        c.execute("SELECT * FROM Usuario ORDER BY id DESC;")
-        rows = c.fetchall()
+        # USUARIOS como TUPLE (template usa u[0], u[1], u[2], u[3]...)
+        # Esperado tipico: id, nome, empresa, email, telefone, ..., status/data
+        c.execute("""
+            SELECT id,
+                   COALESCE(nome_completo, '') as nome_completo,
+                   COALESCE(empresa, '') as empresa,
+                   COALESCE(email, '') as email,
+                   COALESCE(telefone, '') as telefone,
+                   COALESCE(senha_hash, '') as senha_hash,
+                   COALESCE(is_admin, 0) as is_admin,
+                   COALESCE(assinatura_ativa, 0) as assinatura_ativa,
+                   COALESCE(data_cadastro, '') as data_cadastro,
+                   COALESCE(ultimo_acesso, '') as ultimo_acesso
+            FROM Usuario
+            ORDER BY id DESC
+        """)
+        usuarios = c.fetchall()  # list of tuples
 
-        # Lista em DICT (moderno) e tambem em TUPLE (compatibilidade com template antigo)
-        usuarios = []
-        usuarios_tuples = []
-        for r in rows:
-            d = dict(r)
-            usuarios.append(d)
-            # ordem tipica: id, nome_completo, empresa, email, telefone, senha_hash, is_admin, assinatura_ativa, data_cadastro, ...
-            usuarios_tuples.append((
-                d.get("id"),
-                d.get("nome_completo") or d.get("nome") or "",
-                d.get("empresa") or "",
-                d.get("email") or "",
-                d.get("telefone") or "",
-                d.get("senha_hash") or "",
-                d.get("is_admin") or 0,
-                d.get("assinatura_ativa") or 0,
-                d.get("data_cadastro") or "",
-                d.get("ultimo_acesso") or "",
-            ))
-
+        # VIDEOS como TUPLE (template usa v[0], v[1], v[2], v[3]...)
+        # Esperado pelo erro v[3][:50]: id, titulo, categoria, url, ...
         try:
-            c.execute("SELECT * FROM VideoCurso ORDER BY ordem ASC, id DESC;")
-            videos = [dict(v) for v in c.fetchall()]
+            c.execute("""
+                SELECT id,
+                       COALESCE(titulo, '') as titulo,
+                       COALESCE(categoria, 'Geral') as categoria,
+                       COALESCE(url_video, '') as url_video,
+                       COALESCE(descricao, '') as descricao,
+                       COALESCE(ordem, 0) as ordem,
+                       COALESCE(ativo, 1) as ativo,
+                       COALESCE(data_criacao, '') as data_criacao
+                FROM VideoCurso
+                ORDER BY ordem ASC, id DESC
+            """)
+            videos = c.fetchall()  # list of tuples
         except Exception:
             videos = []
 
         total_usuarios = len(usuarios)
+        # assinatura_ativa = indice 7, is_admin = indice 6
         assinantes_ativos = 0
         for u in usuarios:
-            if u.get("assinatura_ativa") in (1, True, "1", "true", "True") or u.get("is_admin") in (1, True, "1", "true", "True"):
-                assinantes_ativos += 1
+            try:
+                if (len(u) > 7 and u[7] in (1, "1", True)) or (len(u) > 6 and u[6] in (1, "1", True)):
+                    assinantes_ativos += 1
+            except Exception:
+                pass
         if assinantes_ativos == 0 and total_usuarios > 0:
             assinantes_ativos = total_usuarios
 
         valor_mensalidade = 59.90
-        receita_estimada = float(assinantes_ativos) * float(valor_mensalidade)
+        receita_estimada = float(assinantes_ativos) * valor_mensalidade
         total_videos = len(videos)
-        total_assinantes = assinantes_ativos
 
         conn.close()
 
-        # Envia TODAS as variantes de nomes que o template possa esperar
         return render_template(
-            "admin/painel_admin.html",
-            usuarios=usuarios_tuples,   # template antigo usa usuario[3] etc
-            users=usuarios_tuples,
-            lista_usuarios=usuarios_tuples,
-            usuarios_dict=usuarios,
+            'admin/painel_admin.html',
+            usuarios=usuarios,
+            users=usuarios,
             videos=videos,
             lista_videos=videos,
             total_usuarios=total_usuarios,
             assinantes_ativos=assinantes_ativos,
-            total_assinantes=total_assinantes,
+            total_assinantes=assinantes_ativos,
             receita_estimada=receita_estimada,
             total_videos=total_videos,
             videos_publicados=total_videos,
@@ -2302,39 +2309,36 @@ def painel_admin():
         return f"Erro no painel admin: {type(e).__name__}: {str(e)}", 500
 
 
-@app.route("/admin/video/novo", methods=["POST"])
+@app.route('/admin/video/novo', methods=['POST'])
 @admin_required
 def admin_video_novo():
     try:
-        titulo = request.form.get("titulo")
-        url_video = request.form.get("url_video") or request.form.get("url")
-        categoria = request.form.get("categoria") or "Geral"
-        ordem = int(request.form.get("ordem") or 0)
-        descricao = request.form.get("descricao") or ""
-        data_criacao = datetime.now().strftime("%Y-%m-%d")
+        titulo = request.form.get('titulo') or ''
+        url_video = request.form.get('url_video') or request.form.get('url') or ''
+        categoria = request.form.get('categoria') or 'Geral'
+        ordem = int(request.form.get('ordem') or 0)
+        descricao = request.form.get('descricao') or ''
+        data_criacao = datetime.now().strftime('%Y-%m-%d')
 
         dbfile = DB_PATH if "DB_PATH" in globals() else "app.db"
         conn = sqlite3.connect(dbfile)
         c = conn.cursor()
         c.execute(
-            """
-            INSERT INTO VideoCurso (titulo, url_video, categoria, ordem, descricao, ativo, data_criacao)
-            VALUES (?, ?, ?, ?, ?, 1, ?)
-            """,
-            (titulo, url_video, categoria, ordem, descricao, data_criacao),
+            "INSERT INTO VideoCurso (titulo, url_video, categoria, ordem, descricao, ativo, data_criacao) VALUES (?, ?, ?, ?, ?, 1, ?)",
+            (titulo, url_video, categoria, ordem, descricao, data_criacao)
         )
         conn.commit()
         conn.close()
         try:
-            flash("Vídeo publicado com sucesso!", "success")
+            flash('Vídeo publicado com sucesso!', 'success')
         except Exception:
             pass
-        return redirect("/admin")
+        return redirect('/admin')
     except Exception as e:
         return f"Erro ao cadastrar vídeo: {str(e)}", 500
 
 
-@app.route("/admin/video/excluir/<int:id>")
+@app.route('/admin/video/excluir/<int:id>')
 @admin_required
 def admin_video_excluir(id):
     try:
@@ -2345,10 +2349,10 @@ def admin_video_excluir(id):
         conn.commit()
         conn.close()
         try:
-            flash("Vídeo removido com sucesso!", "info")
+            flash('Vídeo removido com sucesso!', 'info')
         except Exception:
             pass
-        return redirect("/admin")
+        return redirect('/admin')
     except Exception as e:
         return f"Erro ao excluir vídeo: {str(e)}", 500
 
