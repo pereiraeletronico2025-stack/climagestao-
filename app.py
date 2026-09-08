@@ -1459,86 +1459,10 @@ def telegram_testar():
 # =========================================================================
 # ROTAS: PAINEL DO CRIADOR / ADMIN MASTER & GESTÃO DE VÍDEOS
 # =========================================================================
-@app.route('/admin')
-@admin_required
-def painel_admin():
-    try:
-        conn = sqlite3.connect(DB_PATH if 'DB_PATH' in globals() else 'app.db')
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
-
-        # Busca usuarios
-        c.execute("SELECT * FROM Usuario ORDER BY id DESC;")
-        usuarios = [dict(u) for u in c.fetchall()]
-
-        # Busca videos
-        c.execute("SELECT * FROM VideoCurso ORDER BY ordem ASC, id DESC;")
-        videos = [dict(v) for v in c.fetchall()]
-
-        total_usuarios = len(usuarios)
-        assinantes_ativos = sum(1 for u in usuarios if u.get('assinatura_ativa') or u.get('is_admin'))
-        total_assinantes = assinantes_ativos if assinantes_ativos > 0 else total_usuarios
-        valor_mensalidade = 59.90
-        receita_estimada = total_assinantes * valor_mensalidade
-        total_videos = len(videos)
-
-        conn.close()
-
-        return render_template(
-            'admin/painel_admin.html',
-            usuarios=usuarios,
-            videos=videos,
-            total_usuarios=total_usuarios,
-            assinantes_ativos=total_assinantes,
-            total_assinantes=total_assinantes,
-            receita_estimada=receita_estimada,
-            total_videos=total_videos,
-            valor_mensalidade=valor_mensalidade
-        )
-    except Exception as e:
-        return f"Erro no painel admin: {str(e)}", 500
 
 
-@app.route('/admin/video/novo', methods=['POST'])
-@admin_required
-def admin_video_novo():
-    try:
-        titulo = request.form.get('titulo')
-        url_video = request.form.get('url_video')
-        categoria = request.form.get('categoria') or 'Geral'
-        ordem = int(request.form.get('ordem') or 0)
-        descricao = request.form.get('descricao')
-        data_criacao = datetime.now().strftime('%Y-%m-%d')
-
-        conn = sqlite3.connect(DB_PATH if 'DB_PATH' in globals() else 'app.db')
-        c = conn.cursor()
-        c.execute("""
-            INSERT INTO VideoCurso (titulo, url_video, categoria, ordem, descricao, ativo, data_criacao)
-            VALUES (?, ?, ?, ?, ?, 1, ?)
-        """, (titulo, url_video, categoria, ordem, descricao, data_criacao))
-        conn.commit()
-        conn.close()
-
-        flash("Vídeo publicado com sucesso!", "success")
-        return redirect('/admin')
-    except Exception as e:
-        return f"Erro ao cadastrar vídeo: {str(e)}", 500
 
 
-@app.route('/admin/video/excluir/<int:id>')
-@admin_required
-def admin_video_excluir(id):
-    try:
-        conn = sqlite3.connect(DB_PATH if 'DB_PATH' in globals() else 'app.db')
-        c = conn.cursor()
-        c.execute("DELETE FROM VideoCurso WHERE id = ?", (id,))
-        conn.commit()
-        conn.close()
-        flash("Vídeo removido com sucesso!", "info")
-        return redirect('/admin')
-    except Exception as e:
-        return f"Erro ao excluir vídeo: {str(e)}", 500
-    return redirect(url_for('faturamento'))
 
 
 @app.route('/alertas')
@@ -2300,3 +2224,131 @@ def central_laudos():
         return render_template('central_laudos.html', laudos=laudos)
     except Exception as e:
         return f"Erro ao carregar Central de Laudos: {str(e)}", 500
+
+
+@app.route('/admin')
+@admin_required
+def painel_admin():
+    try:
+        dbfile = DB_PATH if "DB_PATH" in globals() else "app.db"
+        conn = sqlite3.connect(dbfile)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+
+        c.execute("SELECT * FROM Usuario ORDER BY id DESC;")
+        rows = c.fetchall()
+
+        # Lista em DICT (moderno) e tambem em TUPLE (compatibilidade com template antigo)
+        usuarios = []
+        usuarios_tuples = []
+        for r in rows:
+            d = dict(r)
+            usuarios.append(d)
+            # ordem tipica: id, nome_completo, empresa, email, telefone, senha_hash, is_admin, assinatura_ativa, data_cadastro, ...
+            usuarios_tuples.append((
+                d.get("id"),
+                d.get("nome_completo") or d.get("nome") or "",
+                d.get("empresa") or "",
+                d.get("email") or "",
+                d.get("telefone") or "",
+                d.get("senha_hash") or "",
+                d.get("is_admin") or 0,
+                d.get("assinatura_ativa") or 0,
+                d.get("data_cadastro") or "",
+                d.get("ultimo_acesso") or "",
+            ))
+
+        try:
+            c.execute("SELECT * FROM VideoCurso ORDER BY ordem ASC, id DESC;")
+            videos = [dict(v) for v in c.fetchall()]
+        except Exception:
+            videos = []
+
+        total_usuarios = len(usuarios)
+        assinantes_ativos = 0
+        for u in usuarios:
+            if u.get("assinatura_ativa") in (1, True, "1", "true", "True") or u.get("is_admin") in (1, True, "1", "true", "True"):
+                assinantes_ativos += 1
+        if assinantes_ativos == 0 and total_usuarios > 0:
+            assinantes_ativos = total_usuarios
+
+        valor_mensalidade = 59.90
+        receita_estimada = float(assinantes_ativos) * float(valor_mensalidade)
+        total_videos = len(videos)
+        total_assinantes = assinantes_ativos
+
+        conn.close()
+
+        # Envia TODAS as variantes de nomes que o template possa esperar
+        return render_template(
+            "admin/painel_admin.html",
+            usuarios=usuarios_tuples,   # template antigo usa usuario[3] etc
+            users=usuarios_tuples,
+            lista_usuarios=usuarios_tuples,
+            usuarios_dict=usuarios,
+            videos=videos,
+            lista_videos=videos,
+            total_usuarios=total_usuarios,
+            assinantes_ativos=assinantes_ativos,
+            total_assinantes=total_assinantes,
+            receita_estimada=receita_estimada,
+            total_videos=total_videos,
+            videos_publicados=total_videos,
+            valor_mensalidade=valor_mensalidade,
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Erro no painel admin: {type(e).__name__}: {str(e)}", 500
+
+
+@app.route("/admin/video/novo", methods=["POST"])
+@admin_required
+def admin_video_novo():
+    try:
+        titulo = request.form.get("titulo")
+        url_video = request.form.get("url_video") or request.form.get("url")
+        categoria = request.form.get("categoria") or "Geral"
+        ordem = int(request.form.get("ordem") or 0)
+        descricao = request.form.get("descricao") or ""
+        data_criacao = datetime.now().strftime("%Y-%m-%d")
+
+        dbfile = DB_PATH if "DB_PATH" in globals() else "app.db"
+        conn = sqlite3.connect(dbfile)
+        c = conn.cursor()
+        c.execute(
+            """
+            INSERT INTO VideoCurso (titulo, url_video, categoria, ordem, descricao, ativo, data_criacao)
+            VALUES (?, ?, ?, ?, ?, 1, ?)
+            """,
+            (titulo, url_video, categoria, ordem, descricao, data_criacao),
+        )
+        conn.commit()
+        conn.close()
+        try:
+            flash("Vídeo publicado com sucesso!", "success")
+        except Exception:
+            pass
+        return redirect("/admin")
+    except Exception as e:
+        return f"Erro ao cadastrar vídeo: {str(e)}", 500
+
+
+@app.route("/admin/video/excluir/<int:id>")
+@admin_required
+def admin_video_excluir(id):
+    try:
+        dbfile = DB_PATH if "DB_PATH" in globals() else "app.db"
+        conn = sqlite3.connect(dbfile)
+        c = conn.cursor()
+        c.execute("DELETE FROM VideoCurso WHERE id = ?", (id,))
+        conn.commit()
+        conn.close()
+        try:
+            flash("Vídeo removido com sucesso!", "info")
+        except Exception:
+            pass
+        return redirect("/admin")
+    except Exception as e:
+        return f"Erro ao excluir vídeo: {str(e)}", 500
+
